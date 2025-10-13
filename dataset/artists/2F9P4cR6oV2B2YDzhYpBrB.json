@@ -1,0 +1,39 @@
+{
+    "external_urls": {
+        "spotify": "https://open.spotify.com/artist/14d5KCX9nprUcxnKIShrr1"
+    },
+    "followers": {
+        "href": null,
+        "total": 232118
+    },
+    "genres": [
+        "j-rock",
+        "japanese indie",
+        "shoegaze",
+        "math rock",
+        "shibuya-kei"
+    ],
+    "href": "https://api.spotify.com/v1/artists/14d5KCX9nprUcxnKIShrr1?locale=en-US%2Cen%3Bq%3D0.5",
+    "id": "14d5KCX9nprUcxnKIShrr1",
+    "images": [
+        {
+            "url": "https://i.scdn.co/image/ab6761610000e5eb53a61972ed2f11fb3e690dfe",
+            "height": 640,
+            "width": 640
+        },
+        {
+            "url": "https://i.scdn.co/image/ab6761610000517453a61972ed2f11fb3e690dfe",
+            "height": 320,
+            "width": 320
+        },
+        {
+            "url": "https://i.scdn.co/image/ab6761610000f17853a61972ed2f11fb3e690dfe",
+            "height": 160,
+            "width": 160
+        }
+    ],
+    "name": "MASS OF THE FERMENTING DREGS",
+    "popularity": 58,
+    "type": "artist",
+    "uri": "spotify:artist:14d5KCX9nprUcxnKIShrr1"
+}

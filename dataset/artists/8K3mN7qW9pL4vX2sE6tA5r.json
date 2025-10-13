@@ -1,0 +1,40 @@
+{
+  "external_urls": {
+    "spotify": "https://open.spotify.com/artist/3ZztVuWxHzNpl0THurTFCv"
+  },
+  "followers": {
+    "href": null,
+    "total": 1224475
+  },
+  "genres": [
+    "metalcore",
+    "djent",
+    "metal",
+    "mathcore",
+    "post-hardcore",
+    "deathcore"
+  ],
+  "href": "https://api.spotify.com/v1/artists/3ZztVuWxHzNpl0THurTFCv?locale=en-US%2Cen%3Bq%3D0.5",
+  "id": "3ZztVuWxHzNpl0THurTFCv",
+  "images": [
+    {
+      "url": "https://i.scdn.co/image/ab6761610000e5ebd8691d3ca44cd95c89a40da4",
+      "height": 640,
+      "width": 640
+    },
+    {
+      "url": "https://i.scdn.co/image/ab67616100005174d8691d3ca44cd95c89a40da4",
+      "height": 320,
+      "width": 320
+    },
+    {
+      "url": "https://i.scdn.co/image/ab6761610000f178d8691d3ca44cd95c89a40da4",
+      "height": 160,
+      "width": 160
+    }
+  ],
+  "name": "Architects",
+  "popularity": 69,
+  "type": "artist",
+  "uri": "spotify:artist:3ZztVuWxHzNpl0THurTFCv"
+}

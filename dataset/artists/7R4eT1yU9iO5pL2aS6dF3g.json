@@ -1,0 +1,37 @@
+{
+  "external_urls": {
+    "spotify": "https://open.spotify.com/artist/4MzJMcHQBl9SIYSjwWn8QW"
+  },
+  "followers": {
+    "href": null,
+    "total": 982770
+  },
+  "genres": [
+    "metalcore",
+    "djent",
+    "metal"
+  ],
+  "href": "https://api.spotify.com/v1/artists/4MzJMcHQBl9SIYSjwWn8QW?locale=en-US%2Cen%3Bq%3D0.5",
+  "id": "4MzJMcHQBl9SIYSjwWn8QW",
+  "images": [
+    {
+      "url": "https://i.scdn.co/image/ab6761610000e5eb501369c8b24b71bb2dcca603",
+      "height": 640,
+      "width": 640
+    },
+    {
+      "url": "https://i.scdn.co/image/ab67616100005174501369c8b24b71bb2dcca603",
+      "height": 320,
+      "width": 320
+    },
+    {
+      "url": "https://i.scdn.co/image/ab6761610000f178501369c8b24b71bb2dcca603",
+      "height": 160,
+      "width": 160
+    }
+  ],
+  "name": "Spiritbox",
+  "popularity": 69,
+  "type": "artist",
+  "uri": "spotify:artist:4MzJMcHQBl9SIYSjwWn8QW"
+}

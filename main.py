@@ -65,7 +65,7 @@ def app_menu():
 
 
 
-artists_name_idname = {}
+artists_name_idname = {} # dict with name.lower as key and value (id,name)
 artist_genre = {}
 
 def get_artists_name_id():

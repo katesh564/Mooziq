@@ -66,6 +66,7 @@ def app_menu():
 
 
 artists_name_idname = {}
+artist_genre = {}
 
 def get_artists_name_id():
    
@@ -78,14 +79,82 @@ def get_artists_name_id():
             artists_name_idname[artist_info["name"].lower()] = (artist_info["id"],artist_info["name"])
 
 
+            artist_genre[artist_info["id"]] = artist_info["genres"]
 
 def print_all_artists():
     get_artists_name_id()
+    print_all_artists()
     
     print("Artists found in the database:")
     for value in artists_name_idname.values():
         print(f"- {value[1]}")
 
+
+# task 2 - gotta do the date thing
+def all_albums_artist():
+    get_artists_name_id()
+
+    l_artists_name_id = {key.lower(): value for key, value in artists_name_id.items()}
+    user_input = input("Please input the name of an artist: ")
+    
+    #check if artist exists
+    if user_input.lower() in l_artists_name_id:
+        chosen_id = ({l_artists_name_id[user_input.lower()]})
+        print(chosen_id)
+    else:
+        print("Artist not found in the database.")
+
+    
+    albums_json = sorted(os.listdir("dataset/albums"))
+    chosen_id_str = next(iter(chosen_id))
+    if chosen_id_str + ".json" in albums_json:
+        
+        file_name_2 = "dataset/albums/" + chosen_id_str + ".json"
+        
+    else:
+        print("Couldn't find any albums.")
+
+    print(f"Listing all available albums from {user_input}:")
+    with open(file_name_2, encoding="utf8") as f:
+         album_info = json.load(f)
+         for item in album_info["items"]:
+            name = item.get('name', 'Name Not Found')
+            release_date = item.get('release_date', 'Date Not Found')
+            
+            print(f"“{name}” was released in {release_date}")
+
+# task 2 - gotta do the date thing
+def all_albums_artist():
+    get_artists_name_id()
+
+    l_artists_name_id = {key.lower(): value for key, value in artists_name_id.items()}
+    user_input = input("Please input the name of an artist: ")
+    
+    #check if artist exists
+    if user_input.lower() in l_artists_name_id:
+        chosen_id = ({l_artists_name_id[user_input.lower()]})
+        print(chosen_id)
+    else:
+        print("Artist not found in the database.")
+
+    
+    albums_json = sorted(os.listdir("dataset/albums"))
+    chosen_id_str = next(iter(chosen_id))
+    if chosen_id_str + ".json" in albums_json:
+        
+        file_name_2 = "dataset/albums/" + chosen_id_str + ".json"
+        
+    else:
+        print("Couldn't find any albums.")
+
+    print(f"Listing all available albums from {user_input}:")
+    with open(file_name_2, encoding="utf8") as f:
+         album_info = json.load(f)
+         for item in album_info["items"]:
+            name = item.get('name', 'Name Not Found')
+            release_date = item.get('release_date', 'Date Not Found')
+            
+            print(f"“{name}” was released in {release_date}")
 
 # task 3
 def get_top_tracks():
@@ -128,6 +197,62 @@ def get_top_tracks():
         elif value > 70:
             print(f"- \"{key}\" has a popularity score of {value}. It is made for the charts!")
 
+ 
+#task 4
+def export_artist_data():
+    get_artists_name_id()
+    print_all_artists()
+    
+    header = "artist_id,artist_name,number_of_albums,top_track_1,top_track_2,genres\n"
+    csv_path = "artists-data.csv"
+
+    l_artists_name_id = {key.lower(): value for key, value in artists_name_id.items()}
+    artist_name = input("Please input the name of an artist: ")
+
+    if artist_name.lower() in l_artists_name_id:
+        artist_id = l_artists_name_id[artist_name.lower()]
+    else:
+        print("Artist not found in the database.")
+        return
+
+    #count albums
+    albums_json = sorted(os.listdir("dataset/albums"))
+    num_albums = 0
+    album_file = artist_id + ".json"
+    if album_file in albums_json:
+        with open(f"dataset/albums/{album_file}", encoding="utf8") as f:
+            album_info = json.load(f)
+            num_albums = len(album_info.get("items", []))
+
+    #get top tracks
+    top_tracks_file = f"dataset/top_tracks/{artist_id}.json"
+    top_track_1 = ""
+    top_track_2 = ""
+    if os.path.exists(top_tracks_file):
+        with open(top_tracks_file, encoding="utf8") as f:
+            tracks_info = json.load(f)
+            tracks = sorted(tracks_info.get("tracks", []), key=lambda x: x.get("popularity", 0), reverse=True)
+            if len(tracks) > 0:
+                top_track_1 = tracks[0].get("name", "")
+            if len(tracks) > 1:
+                top_track_2 = tracks[1].get("name", "")
+
+    genres_list = artist_genre.get(artist_id, [])
+    if genres_list:
+        genres_str = '"' + ", ".join(genres_list) + '"'
+    else:
+        genres_str = ""
+
+    #le CSV
+    row = f"{artist_id},{artist_name},{num_albums},{top_track_1},{top_track_2},{genres_str}\n"
+
+    if not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0: #append
+        with open(csv_path, "w", encoding="utf8") as csvfile:
+            csvfile.write(header)
+            csvfile.write(row)
+    else: #create
+        with open(csv_path, "a", encoding="utf8") as csvfile:
+            csvfile.write(row) 
 
 
 # task 5

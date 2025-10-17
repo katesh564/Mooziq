@@ -1,5 +1,13 @@
 import json,os,re
 
+artists_name_idname = {} # dict with name.lower as key and value (id,name)
+albums_name_release = {}
+artist_genre = {}
+search_by_lyrics_dict = {}
+months = ["January","February","March","April","May","June"]
+months += ["July","August","September","October","November","December"]
+
+
 def app_menu():
     
     menu = """Welcome to Mooziq!
@@ -39,7 +47,7 @@ def app_menu():
                 get_albums_by_year() 
                 app_menu()
             case 6:
-                creativity_score() 
+                moosefy_song() 
                 app_menu()
             case 7:
                 get_longest_uniq_seq() 
@@ -65,8 +73,7 @@ def app_menu():
 
 
 
-artists_name_idname = {} # dict with name.lower as key and value (id,name)
-artist_genre = {}
+
 
 def get_artists_name_id():
    
@@ -89,14 +96,15 @@ def print_all_artists():
         print(f"- {value[1]}")
 
 
-# task 2 - gotta do the date thing
+# task 2
 def all_albums_artist():
     get_artists_name_id()
+    print_all_artists()
 
-    l_artists_name_id = {key.lower(): value for key, value in  artists_name_idname.items()}
+    l_artists_name_id = {key.lower(): value for key, value in get_artists_name_id.items()}
     user_input = input("Please input the name of an artist: ")
     
-    #check if artist exists
+
     if user_input.lower() in l_artists_name_id:
         chosen_id = ({l_artists_name_id[user_input.lower()]})
         print(chosen_id)
@@ -119,8 +127,26 @@ def all_albums_artist():
          for item in album_info["items"]:
             name = item.get('name', 'Name Not Found')
             release_date = item.get('release_date', 'Date Not Found')
+            release_date_precision = item.get('release_date_precision', 'Precision Not Found')
+
+            if release_date_precision == "day":
+                year, month, day = release_date.split('-')
+                month_name = months[int(month) - 1]
+                day_int = int(day)
+
+                if 11 <= day_int % 100 <= 13:
+                    suffix = "th"
+                else:
+                    suffix = {1: "st", 2: "nd", 3: "rd"}.get(day_int % 10, "th")
+                release_date = f"{month_name} {day_int}{suffix}, {year}"
             
+            elif release_date_precision == "month":
+                year, month = release_date.split('-')
+                month_name = months[int(month) - 1]
+                release_date = f"{month_name}, {year}"
+
             print(f"“{name}” was released in {release_date}")
+
 
 # task 3
 def get_top_tracks():
@@ -176,7 +202,7 @@ def export_artist_data():
     header = "artist_id,artist_name,number_of_albums,top_track_1,top_track_2,genres\n"
     csv_path = "artists-data.csv"
 
-    l_artists_name_id = {key.lower(): value for key, value in  artists_name_idname.items()}
+    l_artists_name_id = {key.lower(): value for key, value in get_artists_name_id.items()}
     artist_name = input("Please input the name of an artist: ")
 
     if artist_name.lower() in l_artists_name_id:
@@ -252,8 +278,75 @@ def get_albums_by_year():
     else:
         print(f"Albums released in the year {chosen_year}:")
         for album_artist in list_album_artist:
-            print(f"- \"{album_artist[0]}\" by {album_artist[1]}.")
+            print(f"- \"{album_artist[0]}\" by {album_artist[1]}")
     
+
+#task 6 
+
+def moosefy_song():
+
+    list_json = sorted(os.listdir("dataset/songs"))
+    
+    title = []
+    artist = []
+    lyrics = []
+
+    print("Songs found in the database:")
+    for file in list_json:
+        file_name = "dataset/songs/" + file
+        with open(file_name, encoding="utf8") as f:
+            song_info = json.load(f)
+            title.append(song_info.get("title", "Unknown Title"))
+            artist.append(song_info.get("artist", "Unknown Artist"))
+            lyrics.append(song_info.get("lyrics", "No Lyrics Found"))
+    
+    for i in range(len(title)):
+        print(f"{i+1}. {title[i]} by {artist[i]}")
+    
+    song_choice = int(input("Choose a song by typing its number: "))
+    if song_choice < 1 or song_choice > len(title):
+        print("Error: Invalid song number.")
+        return
+
+    lyrics_chosen = lyrics[song_choice - 1]
+
+    lyrics_chosen2 = re.sub(r'mo', 'moo', lyrics_chosen, flags=re.IGNORECASE)
+    lyrics_chosen2 = re.sub(r'\b\w+(!|\?)', r'moo\1', lyrics_chosen2)
+
+    if lyrics_chosen == lyrics_chosen2:
+        print(f"{title[song_choice - 1]} by  {artist[song_choice - 1]} is not moose-compatible!")
+    
+    else:
+
+        #create directory if doesnt exist
+        moosified_dir = "moosified"
+        os.makedirs(moosified_dir, exist_ok=True)
+
+        #checkfilename for ?!*etc
+        safe_title = re.sub(r'[\\/*?:"<>|]', "", title[song_choice - 1])
+        filename = f"{safe_title}_moosified.txt"
+        filepath = os.path.join(moosified_dir, filename)
+
+        with open(filepath, "w", encoding="utf8") as f:
+            f.write(lyrics_chosen2)
+
+        print(f"{title[song_choice - 1]} by  {artist[song_choice - 1]} has been moosified!\n File saved at {filepath}")
+        mooooose ="""_            _
+                    /   \          /   \
+                    \_   \        /  __/
+                    _ \   \      /  /__
+                     \_  \_/   _/
+                         \_       _/
+                           | @ @  \__
+                           |
+                          _/     /\
+                         /o)  (o/\ \__
+                         \___/ /
+                          \__/##################gotta fix this
+                    """
+        print(mooooose)
+
+
 
 # task 7
 
@@ -306,8 +399,65 @@ def get_longest_uniq_seq():
 
 # task 8
 
-def forecast_upcoming_concerts():
+#task 8
+
+#task 9
+def create_lyrics_dict():
+
+    list_json = sorted(os.listdir("dataset/songs"))
     
+    for file in list_json:
+        file_name = "dataset/songs/" + file
+        with open(file_name, encoding="utf8") as f:
+            song_info = json.load(f)
+            title = song_info.get("title", "Unknown Title")
+            artist = song_info.get("artist", "Unknown Artist")
+            lyrics = song_info.get("lyrics", "")
+            
+            lyrics= lyrics.lower()
+            lyrics = re.sub(r'[.,!?"]', '', lyrics)
+            lyrics = re.sub(r'\s+', ' ', lyrics).strip()
+
+            for word in lyrics.split():
+                if word not in search_by_lyrics_dict:
+                    search_by_lyrics_dict[word] = []
+                search_by_lyrics_dict[word].append((title, artist))
+
+def search_by_lyrics():
+
+    if not search_by_lyrics_dict:
+        create_lyrics_dict()
+
+    user_input = input("Please input a word or phrase to search for: ").lower()
+    user_input = re.sub(r'[.,!?"]', '', user_input)
+    user_input = re.sub(r'\s+', ' ', user_input).strip()
+
+    words = user_input.split()
+    if not words:
+        print("No valid input provided.")
+        return
+
+    found_songs = None
+
+    for word in words:
+        if word in search_by_lyrics_dict:
+            if found_songs is None:
+                found_songs = set(search_by_lyrics_dict[word])
+            else:
+                found_songs &= set(search_by_lyrics_dict[word])
+        else:
+            found_songs = set()
+            break
+
+    if found_songs:
+        print(f"Songs containing the phrase '{user_input}':")
+        for title, artist in found_songs:
+            print(f"- {title} by {artist}")
+    else:
+        print(f"No songs found containing the phrase '{user_input}'.")
+
+
+app_menu()
         
             
         

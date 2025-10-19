@@ -1,11 +1,24 @@
 import json,os,re,csv
 
-
 albums_name_release = {}
 artist_genre = {}
 search_by_lyrics_dict = {}
 months = ["January","February","March","April","May","June"]
 months += ["July","August","September","October","November","December"]
+ascii_art = r''' ___            ___
+/   \          /   \
+\_   \        /  __/
+ _\   \      /  /__
+ \___  \____/   __/
+     \_       _/
+       | @ @  \__
+       |
+     _/     /\
+    /o)  (o/\ \__
+    \_____/ /
+      \____/
+'''
+
 
 
 # tast 1
@@ -24,10 +37,10 @@ def get_artists_name_id():
 
 
             artist_genre[artist_info["id"]] = artist_info["genres"]
-    
 
 def print_all_artists():
-    get_artists_name_id()
+    if not artists_name_idname:
+        get_artists_name_id()
     
     print("Artists found in the database:")
     for value in artists_name_idname.values():
@@ -36,30 +49,35 @@ def print_all_artists():
 
 # task 2
 def all_albums_artist():
-    get_artists_name_id()
+    if not artists_name_idname:
+        get_artists_name_id()
     print_all_artists()
 
-    l_artists_name_id = {key.lower(): value for key, value in get_artists_name_id.items()}
+    l_artists_name_id = artists_name_idname
     user_input = input("Please input the name of an artist: ")
     
 
     if user_input.lower() in l_artists_name_id:
-        chosen_id = ({l_artists_name_id[user_input.lower()]})
-        print(chosen_id)
+        chosen_id = {l_artists_name_id[user_input.lower()][0]}
+
     else:
         print("Artist not found in the database.")
+        return
 
     
     albums_json = sorted(os.listdir("dataset/albums"))
-    chosen_id_str = next(iter(chosen_id))
-    if chosen_id_str + ".json" in albums_json:
+    chosen_id_str = str(next(iter(chosen_id)))
+
+    if (chosen_id_str+".json") in albums_json:
         
         file_name_2 = "dataset/albums/" + chosen_id_str + ".json"
-        
+
     else:
         print("Couldn't find any albums.")
-
-    print(f"Listing all available albums from {user_input}:")
+        return
+    
+    x = l_artists_name_id[user_input.lower()][1]
+    print(f"Listing all available albums from {x}...")
     with open(file_name_2, encoding="utf8") as f:
          album_info = json.load(f)
          for item in album_info["items"]:
@@ -76,14 +94,16 @@ def all_albums_artist():
                     suffix = "th"
                 else:
                     suffix = {1: "st", 2: "nd", 3: "rd"}.get(day_int % 10, "th")
-                release_date = f"{month_name} {day_int}{suffix}, {year}"
+                release_date = f"{month_name} {day_int}{suffix} {year}"
             
             elif release_date_precision == "month":
                 year, month = release_date.split('-')
                 month_name = months[int(month) - 1]
-                release_date = f"{month_name}, {year}"
+                release_date = f"{month_name} {year}"
 
-            print(f"“{name}” was released in {release_date}")
+
+            print(f'- "{name}" was released in {release_date}.')
+
 
 
 # task 3
@@ -108,7 +128,7 @@ def get_top_tracks():
 
     for file_name in list_json:     # def get_top_tracks_path
         if file_name[:-5] == artist_id:
-            top_tracks_path = file_name
+            top_tracks_path += file_name
     
     list_track_popul = []
 
@@ -132,60 +152,93 @@ def get_top_tracks():
 
  
 #task 4
+#task 4
 def export_artist_data():
-    get_artists_name_id()
-    print_all_artists()
-    
-    header = "artist_id,artist_name,number_of_albums,top_track_1,top_track_2,genres\n"
-    csv_path = "artists-data.csv"
 
-    l_artists_name_id = {key.lower(): value for key, value in get_artists_name_id.items()}
-    artist_name = input("Please input the name of an artist: ")
+    if not artists_name_idname:
+        get_artists_name_id()
+    
+    for value in artists_name_idname.values():
+        print(f"- {value[1]}")
+
+    header = ["artist_id","artist_name","number_of_albums","top_track_1","top_track_2","genres"]
+    csv_path = "artist-data.csv"
+
+    os.makedirs("dataset", exist_ok=True)
+    csv_path = os.path.join("dataset", "artist-data.csv")
+
+    l_artists_name_id = artists_name_idname
+    artist_name = input("Please input the name of one of the following artists: ")
 
     if artist_name.lower() in l_artists_name_id:
-        artist_id = l_artists_name_id[artist_name.lower()]
+        artist_info = l_artists_name_id[artist_name.lower()]  
     else:
         print("Artist not found in the database.")
         return
 
-    #count albums
+    artist_id_str = str(artist_info[0])
+
     albums_json = sorted(os.listdir("dataset/albums"))
     num_albums = 0
-    album_file = artist_id + ".json"
+    album_file = artist_id_str + ".json"
     if album_file in albums_json:
         with open(f"dataset/albums/{album_file}", encoding="utf8") as f:
             album_info = json.load(f)
             num_albums = len(album_info.get("items", []))
 
-    #get top tracks
-    top_tracks_file = f"dataset/top_tracks/{artist_id}.json"
+
+    top_tracks_file = f"dataset/top_tracks/{artist_id_str}.json"
     top_track_1 = ""
     top_track_2 = ""
     if os.path.exists(top_tracks_file):
         with open(top_tracks_file, encoding="utf8") as f:
             tracks_info = json.load(f)
-            tracks = sorted(tracks_info.get("tracks", []), key=lambda x: x.get("popularity", 0), reverse=True)
+            tracks = tracks_info.get("tracks", [])
             if len(tracks) > 0:
                 top_track_1 = tracks[0].get("name", "")
             if len(tracks) > 1:
                 top_track_2 = tracks[1].get("name", "")
 
-    genres_list = artist_genre.get(artist_id, [])
-    if genres_list:
-        genres_str = '"' + ", ".join(genres_list) + '"'
+
+    genres_list = artist_genre.get(artist_id_str, [])
+    genres_str = ", ".join(genres_list) if genres_list else ""
+
+    x = l_artists_name_id[artist_name.lower()][1]
+
+    row_dict = {
+        "artist_id": artist_id_str,
+        "artist_name": x,
+        "number_of_albums": str(num_albums),
+        "top_track_1": top_track_1,
+        "top_track_2": top_track_2,
+        "genres": genres_str
+    }
+
+    rows = []
+    if os.path.exists(csv_path) and os.path.getsize(csv_path) > 0:
+        with open(csv_path, newline='', encoding="utf8") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for r in reader:
+                rows.append(r)
+
+    updated = False
+    for r in rows:
+        if r.get("artist_id") == artist_id_str:
+            r.update(row_dict)
+            updated = True
+            break
+    if not updated:
+        rows.append(row_dict)
+
+    with open(csv_path, "w", newline='', encoding="utf8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=header)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    if updated:
+        print(f'exporting"{artist_name}"datatocsvfile...datasuccessfullyupdated.')
     else:
-        genres_str = ""
-
-    #le CSV
-    row = f"{artist_id},{artist_name},{num_albums},{top_track_1},{top_track_2},{genres_str}\n"
-
-    if not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0: #append
-        with open(csv_path, "w", encoding="utf8") as csvfile:
-            csvfile.write(header)
-            csvfile.write(row)
-    else: #create
-        with open(csv_path, "a", encoding="utf8") as csvfile:
-            csvfile.write(row) 
+        print(f'exporting"{artist_name}"datatocsvfile...datasuccessfullyappended.')
 
 
 # task 5
@@ -212,12 +265,14 @@ def get_albums_by_year():
     list_album_artist.sort()
     
     if len(list_album_artist) == 0:
-        print(f"No albums were released in the year {chosen_year}.")
+        print(f"No albums released in the year {chosen_year}")
     else:
-        print(f"Albums released in the year {chosen_year}:")
+        print(f"Albums released in the year: {chosen_year}")
         for album_artist in list_album_artist:
             print(f"- \"{album_artist[0]}\" by {album_artist[1]}.")
     
+
+#task 6 
 
 #task 6 
 
@@ -262,27 +317,18 @@ def moosefy_song():
 
         #checkfilename for ?!*etc
         safe_title = re.sub(r'[\\/*?:"<>|]', "", title[song_choice - 1])
-        filename = f"{safe_title}_moosified.txt"
+        filename = f"{safe_title} Moosified.txt"
         filepath = os.path.join(moosified_dir, filename)
 
         with open(filepath, "w", encoding="utf8") as f:
             f.write(lyrics_chosen2)
 
-        print(f"{title[song_choice - 1]} by  {artist[song_choice - 1]} has been moosified!\n File saved at {filepath}")
-        mooooose ="""_            _
-                    /   \          /   \
-                    \_   \        /  __/
-                    _ \   \      /  /__
-                     \_  \_/   _/
-                         \_       _/
-                           | @ @  \__
-                           |
-                          _/     /\
-                         /o)  (o/\ \__
-                         \___/ /
-                          \__/##################gotta fix this
-                    """
-        print(mooooose)
+        titletoprint = title[song_choice - 1].lower()
+        artisttoprint = artist[song_choice - 1].lower()
+
+        print(f"{titletoprint} by {artisttoprint} has been moos-ified!\nFile saved at ./{filepath}\n{ascii_art}")
+
+
 
 
 
@@ -298,6 +344,7 @@ def get_longest_uniq_seq():
             song_info = json.load(file)
             list_dict_title_artist_lyrics.append(song_info)
     
+
     print("Available songs: ")
     
     x = 0
@@ -439,6 +486,8 @@ def forecast_upcoming_concerts():
         print("TypeError")
 
 
+
+
 #task 9
 
 def create_lyrics_dict():
@@ -455,6 +504,7 @@ def create_lyrics_dict():
             
             lyrics= lyrics.lower()
             lyrics = re.sub(r'[.,!?"]', '', lyrics)
+            lyrics = re.sub(r'[\']', '', lyrics)
             lyrics = re.sub(r'\s+', ' ', lyrics).strip()
 
             for word in lyrics.split():
@@ -463,7 +513,6 @@ def create_lyrics_dict():
                 search_by_lyrics_dict[word].append((title, artist))
 
 def search_by_lyrics():
-
     if not search_by_lyrics_dict:
         create_lyrics_dict()
 
@@ -476,24 +525,15 @@ def search_by_lyrics():
         print("No valid input provided.")
         return
 
-    found_songs = None
-
+    score_map = {} 
     for word in words:
         if word in search_by_lyrics_dict:
-            if found_songs is None:
-                found_songs = set(search_by_lyrics_dict[word])
-            else:
-                found_songs &= set(search_by_lyrics_dict[word])
-        else:
-            found_songs = set()
-            break
+            for song in set(search_by_lyrics_dict[word]):
+                score_map[song] = score_map.get(song, 0) + 1
 
-    if found_songs:
-        print(f"Songs containing the phrase '{user_input}':")
-        for title, artist in found_songs:
-            print(f"- {title} by {artist}")
-    else:
+    if not score_map:
         print(f"No songs found containing the phrase '{user_input}'.")
+    else:
 
 def main():
     try:
@@ -556,3 +596,11 @@ if __name__ == '__main__':
     
 
 
+
+        sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
+        for (title, artist), score in sorted_songs:
+            print(f"- {title} with a score of {score}")
+
+print("Welcome to Mooziq!")
+print("Choose one of the options bellow:")
+app_menu()

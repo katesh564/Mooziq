@@ -489,56 +489,25 @@ def forecast_upcoming_concerts():
 
 def create_lyrics_dict():
 
-    global search_by_lyrics_dict
-
-    os.makedirs("dataset", exist_ok=True)
-    inverted_path = os.path.join("dataset", "inverted_index.json")
-
-    if os.path.exists(inverted_path) and os.path.getsize(inverted_path) > 0:
-        try:
-            with open(inverted_path, "r", encoding="utf8") as f:
-                raw = json.load(f)
-
-            search_by_lyrics_dict = {w: [tuple(item) for item in lst] for w, lst in raw.items()}
-            return
-        except Exception:
-
-            search_by_lyrics_dict = {}
-
-    temp_index = {}
     list_json = sorted(os.listdir("dataset/songs/"))
-
+    
     for file in list_json:
-        file_path = os.path.join("dataset", "songs", file)
-        try:
-            with open(file_path, encoding="utf8") as f:
-                song_info = json.load(f)
-        except Exception:
-            continue
+        file_name = "dataset/songs/" + file
+        with open(file_name, encoding="utf8") as f:
+            song_info = json.load(f)
+            title = song_info.get("title", "Unknown Title")
+            artist = song_info.get("artist", "Unknown Artist")
+            lyrics = song_info.get("lyrics", "")
+            
+            lyrics= lyrics.lower()
+            lyrics = re.sub(r'[.,!?"]', '', lyrics)
+            lyrics = re.sub(r'[\']', '', lyrics)
+            lyrics = re.sub(r'\s+', ' ', lyrics).strip()
 
-        title = song_info.get("title", "Unknown Title")
-        artist = song_info.get("artist", "Unknown Artist")
-        lyrics = song_info.get("lyrics", "")
-        if not lyrics:
-            continue
-
-        lyrics = lyrics.lower()
-        lyrics = re.sub(r'[.,!?"]', '', lyrics)
-        lyrics = re.sub(r"[\']", '', lyrics)
-        lyrics = re.sub(r'\s+', ' ', lyrics).strip()
-
-        for word in lyrics.split():
-            temp_index.setdefault(word, set()).add((title, artist))
-
-    to_save = {w: [list(item) for item in sorted(lst)] for w, lst in temp_index.items()}
-    try:
-        with open(inverted_path, "w", encoding="utf8") as f:
-            json.dump(to_save, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
-
-    search_by_lyrics_dict = {w: [tuple(item) for item in lst] for w, lst in to_save.items()}
-
+            for word in lyrics.split():
+                if word not in search_by_lyrics_dict:
+                    search_by_lyrics_dict[word] = []
+                search_by_lyrics_dict[word].append((title, artist))
 
 def search_by_lyrics():
     if not search_by_lyrics_dict:
@@ -553,7 +522,7 @@ def search_by_lyrics():
         print("No valid input provided.")
         return
 
-    score_map = {}  
+    score_map = {} 
     for word in words:
         if word in search_by_lyrics_dict:
             for song in set(search_by_lyrics_dict[word]):
@@ -561,10 +530,10 @@ def search_by_lyrics():
 
     if not score_map:
         print(f"No songs found containing the phrase '{user_input}'.")
-        return
-
+        sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
+        for (title, artist), score in sorted_songs:
+            print(f"- {title} with a score of {score}")
     sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
-    print(f"Songs matching '{user_input}':")
     for (title, artist), score in sorted_songs:
         print(f"- {title} with a score of {score}")
 

@@ -592,3 +592,4 @@ if __name__ == '__main__':
     print("Welcome to Mooziq!")
     print("Choose one of the options bellow:")
     main()
+        

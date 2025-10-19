@@ -533,7 +533,9 @@ def search_by_lyrics():
 
     if not score_map:
         print(f"No songs found containing the phrase '{user_input}'.")
-    else:
+        sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
+        for (title, artist), score in sorted_songs:
+            print(f"- {title} with a score of {score}")
 
 def main():
     try:

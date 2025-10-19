@@ -152,7 +152,6 @@ def get_top_tracks():
 
  
 #task 4
-#task 4
 def export_artist_data():
 
     if not artists_name_idname:
@@ -536,6 +535,9 @@ def search_by_lyrics():
         sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
         for (title, artist), score in sorted_songs:
             print(f"- {title} with a score of {score}")
+            sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
+        for (title, artist), score in sorted_songs:
+            print(f"- {title} with a score of {score}")
 
 def main():
     try:
@@ -592,17 +594,3 @@ def main():
 if __name__ == '__main__':
     main()
         
-            
-        
-    
-    
-
-
-
-        sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
-        for (title, artist), score in sorted_songs:
-            print(f"- {title} with a score of {score}")
-
-print("Welcome to Mooziq!")
-print("Choose one of the options bellow:")
-app_menu()

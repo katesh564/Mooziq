@@ -273,8 +273,6 @@ def get_albums_by_year():
 
 #task 6 
 
-#task 6 
-
 def moosefy_song():
 
     list_json = sorted(os.listdir("dataset/songs"))
@@ -535,9 +533,9 @@ def search_by_lyrics():
         sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
         for (title, artist), score in sorted_songs:
             print(f"- {title} with a score of {score}")
-            sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
-        for (title, artist), score in sorted_songs:
-            print(f"- {title} with a score of {score}")
+    sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
+    for (title, artist), score in sorted_songs:
+        print(f"- {title} with a score of {score}")
 
 def main():
     try:
@@ -545,8 +543,7 @@ def main():
 
         while menu_choice != 10:
         
-            menu = """Welcome to Mooziq!
-            Choose one of the options bellow:
+            menu = """
 
             1.Get All Artists
             2.Get All Albums By An Artist
@@ -592,5 +589,7 @@ def main():
 
 
 if __name__ == '__main__':
+    print("Welcome to Mooziq!")
+    print("Choose one of the options bellow:")
     main()
         

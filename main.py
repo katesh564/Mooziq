@@ -90,7 +90,7 @@ def all_albums_artist():
                 month_name = months[int(month) - 1]
                 day_int = int(day)
 
-                if 11 <= day_int % 100 <= 13:
+                if 11 <= day_int <= 13:
                     suffix = "th"
                 else:
                     suffix = {1: "st", 2: "nd", 3: "rd"}.get(day_int % 10, "th")
@@ -235,9 +235,9 @@ def export_artist_data():
         writer.writerows(rows)
 
     if updated:
-        print(f'exporting"{artist_name}"datatocsvfile...datasuccessfullyupdated.')
+        print(f'Exporting"{artist_name}"data to CSV file...data successfully updated.')
     else:
-        print(f'exporting"{artist_name}"datatocsvfile...datasuccessfullyappended.')
+        print(f'Exporting"{artist_name}"data to CSV file...data successfully appended.')
 
 
 # task 5
@@ -245,7 +245,7 @@ def export_artist_data():
 def get_albums_by_year():
     get_artists_name_id()
 
-    chosen_year = int(input("Please enter a year: "))
+    chosen_year = int(input("Please enter a year:\n "))
 
     list_json = sorted(os.listdir("dataset/albums/"))
     list_albums = []
@@ -264,9 +264,9 @@ def get_albums_by_year():
     list_album_artist.sort()
     
     if len(list_album_artist) == 0:
-        print(f"No albums released in the year {chosen_year}")
+        print(f"No albums released in the year {chosen_year}.")
     else:
-        print(f"Albums released in the year: {chosen_year}")
+        print(f"Albums released in the year {chosen_year}:")
         for album_artist in list_album_artist:
             print(f"- \"{album_artist[0]}\" by {album_artist[1]}.")
     

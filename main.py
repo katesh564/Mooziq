@@ -1,6 +1,6 @@
-import json,os,re
+import json,os,re,csv
 
-artists_name_idname = {} # dict with name.lower as key and value (id,name)
+
 albums_name_release = {}
 artist_genre = {}
 search_by_lyrics_dict = {}
@@ -8,80 +8,18 @@ months = ["January","February","March","April","May","June"]
 months += ["July","August","September","October","November","December"]
 
 
-def app_menu():
-    
-    menu = """Welcome to Mooziq!
-    Choose one of the options bellow:
-
-
-    1.Get All Artists
-    2.Get All Albums By An Artist
-    3.Get Top Tracks By An Artist
-    4.Export Artist Data
-    5.Get Released Albums By Year
-    6.Analyze Song Lyrics
-    7.Calculate Longest Unique Word Sequence In A Song
-    8.Weather Forecast For Upcoming Concerts
-    9.Search Song By Lyrics
-    10.Exit"""
-
-    print(menu)
-        
-    try:  
-        menu_choice = int(input("Type your option: "))
-
-        match menu_choice:
-            case 1:
-                print_all_artists() 
-                app_menu()
-            case 2:
-                all_albums_artist() 
-                app_menu()
-            case 3:
-                get_top_tracks() 
-                app_menu()
-            case 4:
-                export_artist_data() 
-                app_menu()
-            case 5:
-                get_albums_by_year() 
-                app_menu()
-            case 6:
-                moosefy_song() 
-                app_menu()
-            case 7:
-                get_longest_uniq_seq() 
-                app_menu()
-            case 8:
-                forecast_upcoming_concerts() 
-                app_menu()
-            case 9:
-                search_by_lyrics() 
-                app_menu()
-            case 10:
-                print("Thank you for using Mooziq! Have a nice day :)")
-            case _:
-                print("Error - Invalid option. Please input a number between 1 and 10.")
-                app_menu()
-    except ValueError:
-        print("Invalid input: ValueError")
-
-
-
-
 # tast 1
 
-
-
-
+artists_name_idname = {} # dict with name.lower as key and value (id,name)
+artist_genre = {}
 
 def get_artists_name_id():
    
     list_json = sorted(os.listdir("dataset/artists/"))
     
-    for file in list_json:
-        with open(f"dataset/artists/{file}", 'r',encoding = "utf-8") as f:
-            artist_info = json.load(f)
+    for file_name in list_json:
+        with open(f"dataset/artists/{file_name}", 'r',encoding = "utf-8") as file:
+            artist_info = json.load(file)
             artists_name_idname[artist_info["name"].lower()] = (artist_info["id"],artist_info["name"])
 
 
@@ -154,44 +92,43 @@ def get_top_tracks():
 
     chosen_art = input("Please input the name of an artist: ")
     artist_id = ""
-    list_all_art = []
 
-    for key,value in artists_name_idname.items():
+    
+
+    for key,value in artists_name_idname.items(): #  def get_artist_id
         if key == chosen_art.lower():
             artist_id = value[0]
         elif chosen_art.lower() not in artists_name_idname.keys():
             print("Artist Not Found")
             return
-    
-    for value in artists_name_idname.values():
-        list_all_art.append(value[1])
 
-    list_json = sorted(os.listdir("dataset/top_tracks/"))
+    list_json = sorted(os.listdir("dataset/top_tracks/")) # lambda ?
+    # list_json = lambda file: sorted(os.listdir(f"dataset/{file}/"))
     top_tracks_path = ""
 
-    for file_name in list_json:
+    for file_name in list_json:     # def get_top_tracks_path
         if file_name[:-5] == artist_id:
             top_tracks_path = file_name
     
-    list_tracks_namer_popul = []
+    list_track_popul = []
 
-    with open(f"dataset/artists/{top_tracks_path}", "r", encoding="utf-8") as f:
-        dict_top_tracks = json.load(f)
+    with open(f"dataset/top_tracks/{top_tracks_path}", "r", encoding="utf-8") as file: # def get_list_track_popul
+        dict_top_tracks = json.load(file)
         list_tracks = dict_top_tracks["tracks"]
         for track in list_tracks:
-            list_tracks_namer_popul.append((track["name"],track["popularity"]))
+            list_track_popul.append((track["name"],track["popularity"]))
         
-    
     print(f"Listing top tracks for {artists_name_idname[chosen_art.lower()][1]}...")
-    for track in list_tracks_namer_popul:
-        if track[1] <= 30:
-            print(f"- \"{track[0]}\" has a popularity score of {track[1]}. No one knows this song.")
-        elif track[1] <= 50:
-            print(f"- \"{track[0]}\" has a popularity score of {track[1]}. Popular song.")
-        elif track[1] <= 70:
-            print(f"- \"{track[0]}\" has a popularity score of {track[1]}. It is quite popular now!")
-        elif track[1] > 70:
-            print(f"- \"{track[0]}\" has a popularity score of {track[1]}. It is made for the charts!")
+
+    for track_popul in list_track_popul: # def print_tracks_popularity
+        if track_popul[1] <= 30:
+            print(f"- \"{track_popul[0]}\" has a popularity score of {track_popul[1]}. No one knows this song.")
+        elif track_popul[1] <= 50:
+            print(f"- \"{track_popul[0]}\" has a popularity score of {track_popul[1]}. Popular song.")
+        elif track_popul[1] <= 70:
+            print(f"- \"{track_popul[0]}\" has a popularity score of {track_popul[1]}. It is quite popular now!")
+        elif track_popul[1] > 70:
+            print(f"- \"{track_popul[0]}\" has a popularity score of {track_popul[1]}. It is made for the charts!")
 
  
 #task 4
@@ -262,23 +199,24 @@ def get_albums_by_year():
     list_albums = []
     list_album_artist = []
 
-    for file in list_json:      
-        with open(f"dataset/albums/{file}", 'r',encoding="utf-8") as f:
-            albums = json.load(f)
-            list_albums = albums["items"]
+    for file_name in list_json:      
+        with open(f"dataset/albums/{file_name}", 'r',encoding="utf-8") as file:
+            albums_info = json.load(file)
+            list_albums = albums_info["items"]
             for album in list_albums:
                 if int(album["release_date"][:4]) == chosen_year:
-                    for key,value in artists_name_idname.items():
-                        if value[0] == file[:-5]:
-                            album_artist = (album["name"],value[1])
-                            list_album_artist.append(album_artist) 
+                    for value in artists_name_idname.values():
+                        if value[0] == file_name[:-5]:
+                            list_album_artist.append((album["name"],value[1])) 
+    
     list_album_artist.sort()
+    
     if len(list_album_artist) == 0:
         print(f"No albums were released in the year {chosen_year}.")
     else:
         print(f"Albums released in the year {chosen_year}:")
         for album_artist in list_album_artist:
-            print(f"- \"{album_artist[0]}\" by {album_artist[1]}")
+            print(f"- \"{album_artist[0]}\" by {album_artist[1]}.")
     
 
 #task 6 
@@ -355,9 +293,9 @@ def get_longest_uniq_seq():
     list_json = sorted(os.listdir("dataset/songs/"))
     list_dict_title_artist_lyrics = []
 
-    for file in list_json:
-        with open(f"dataset/songs/{file}", 'r',encoding = "utf-8") as f:
-            song_info = json.load(f)
+    for file_name in list_json: # def open_files(list_json)
+        with open(f"dataset/songs/{file_name}", 'r',encoding = "utf-8") as file:
+            song_info = json.load(file)
             list_dict_title_artist_lyrics.append(song_info)
     
     print("Available songs: ")
@@ -399,12 +337,113 @@ def get_longest_uniq_seq():
 
 # task 8
 
-#task 8
+def forecast_upcoming_concerts():
+    get_artists_name_id()
+
+    with open("dataset/concerts/concerts.csv","r",encoding = "utf-8") as f: # def list_all_conserts
+        list_dict_concert_info = csv.DictReader(f)
+    
+        dict_artists_ctcode_date = {} 
+        for dict in list_dict_concert_info:
+            
+            day =f"{int(dict["day"]):02d}"
+            month = f"{int(dict["month"]):02d}"
+            year =dict["year"]
+
+
+            if dict["artist"] not in dict_artists_ctcode_date.keys():
+                date = f"{year}-{month}-{day}"
+                dict_artists_ctcode_date[dict["artist"]] = [(dict["city_code"],date)]
+            else:
+                date = date = f"{year}-{month}-{day}"
+                dict_artists_ctcode_date[dict["artist"]].append((dict["city_code"],date))
+
+    print("Upcoming artists:")
+
+    for key in dict_artists_ctcode_date.keys():
+        print(f"- {key}")
+
+    try:
+        user_choice = input("Please input the name of one of the following artists: ")
+        chosen_art = ""
+        
+        for key,value in artists_name_idname.items(): #  def get_artist_id
+            if key == user_choice.lower():
+                chosen_art = value[1]
+            elif user_choice.lower() not in artists_name_idname.keys():
+                print("Artist Not Found")
+                return
+
+        with open("dataset/weather/weather.csv","r",encoding = "utf-8") as f:
+            list_dict_weather_info = csv.DictReader(f)
+
+            weather_concerts = []   # def get_weather_info
+            for dict in list_dict_weather_info:
+                for city_code, date in dict_artists_ctcode_date[chosen_art]:
+                    if city_code == dict["city_code"] and date == dict["date"]:
+                        weather_concerts.append(dict)
+
+        list_city_dates = []
+
+        for concert in weather_concerts:
+            date_str = concert["date"]  # e.g. '2025-09-25'
+            
+            year = int(date_str[:4])     # def get_date_suffix
+            month = int(date_str[5:7])     
+            day = int(date_str[-2:])         
+            if 11 <= day % 100 <= 13:
+                suffix = "th"
+            else:
+                suffix = {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+            
+            month_name = months[int(month) - 1]
+            
+            list_city_dates.append((concert["city"],f"{month_name} {day}{suffix} {year}"))
+
+        # def get_recommendations
+        weather_recom = []
+
+        for concert in weather_concerts:
+            recommend = ""
+            if int(concert["temperature_min"]) > 10 and float(concert["precipitation"]) < 2.3:
+                recommend += "Perfect weather!"
+
+            if int(concert["temperature_min"]) <= 10:
+                recommend += "Wear warm clothes. "
+
+            if float(concert["precipitation"]) >= 2.3:
+                if int(concert["wind_speed"]) < 15:
+                    recommend += "Bring an umbrella."
+                else:
+                    recommend += "Bring a rain jacket."
+           
+            weather_recom.append(recommend)
+                
+        # def print_recom
+
+        if len(weather_concerts) > 1:
+            print(f"Fetching weather forecast for {chosen_art} concerts...")
+            print(f"{chosen_art} has {len(weather_concerts)} upcoming concerts:")
+        else:
+            print(f"Fetching weather forecast for \"{chosen_art}\" concerts...")
+            print(f"{chosen_art} has {len(weather_concerts)} upcoming concert:")
+
+        index = 0
+        for concert in weather_concerts:
+            date = list_city_dates[index][1]
+            recom = weather_recom[index]
+            print(f"- {concert["city"]}, {date}. {recom}")
+            index += 1
+
+    except TypeError :
+        print("TypeError")
+
 
 #task 9
+
 def create_lyrics_dict():
 
-    list_json = sorted(os.listdir("dataset/songs"))
+    list_json = sorted(os.listdir("dataset/songs/"))
     
     for file in list_json:
         file_name = "dataset/songs/" + file
@@ -456,8 +495,60 @@ def search_by_lyrics():
     else:
         print(f"No songs found containing the phrase '{user_input}'.")
 
+def main():
+    try:
+        menu_choice = 0
 
-app_menu()
+        while menu_choice != 10:
+        
+            menu = """Welcome to Mooziq!
+            Choose one of the options bellow:
+
+            1.Get All Artists
+            2.Get All Albums By An Artist
+            3.Get Top Tracks By An Artist
+            4.Export Artist Data
+            5.Get Released Albums By Year
+            6.Analyze Song Lyrics
+            7.Calculate Longest Unique Word Sequence In A Song
+            8.Weather Forecast For Upcoming Concerts
+            9.Search Song By Lyrics
+            10.Exit"""
+
+            print(menu)
+                
+            
+            menu_choice = int(input("Type your option: "))
+
+            match menu_choice:
+                case 1:
+                    print_all_artists() 
+                case 2:
+                    all_albums_artist() 
+                case 3:
+                    get_top_tracks() 
+                case 4:
+                    export_artist_data() 
+                case 5:
+                    get_albums_by_year() 
+                case 6:
+                    moosefy_song() 
+                case 7:
+                    get_longest_uniq_seq() 
+                case 8:
+                    forecast_upcoming_concerts() 
+                case 9:
+                    search_by_lyrics() 
+                case 10:
+                    print("Thank you for using Mooziq! Have a nice day :)")
+                case _:
+                    print("Error - Invalid option. Please input a number between 1 and 10.")
+    except ValueError:
+        print("Invalid input: ValueError")
+
+
+if __name__ == '__main__':
+    main()
         
             
         

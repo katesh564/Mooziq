@@ -5,6 +5,7 @@ import helper_functions as hf
 albums_name_release = {}
 artist_genre = {}
 search_by_lyrics_dict = {}
+inverted_index = {}
 months = ["January","February","March","April","May","June"]
 months += ["July","August","September","October","November","December"]
 ascii_art = r''' ___            ___
@@ -267,7 +268,6 @@ def get_albums_by_year():
     
 
 #task 6 
-
 def moosefy_song():
 
     list_json = sorted(os.listdir("dataset/songs"))
@@ -276,7 +276,7 @@ def moosefy_song():
     artist = []
     lyrics = []
 
-    print("Songs found in the database:")
+    print("Available songs:")
     for file in list_json:
         file_name = "dataset/songs/" + file
         with open(file_name, encoding="utf8") as f:
@@ -288,7 +288,7 @@ def moosefy_song():
     for i in range(len(title)):
         print(f"{i+1}. {title[i]} by {artist[i]}")
     
-    song_choice = int(input("Choose a song by typing its number: "))
+    song_choice = int(input("Please select one of the following songs (number): "))
     if song_choice < 1 or song_choice > len(title):
         print("Error: Invalid song number.")
         return
@@ -303,11 +303,9 @@ def moosefy_song():
     
     else:
 
-        #create directory if doesnt exist
         moosified_dir = "moosified"
         os.makedirs(moosified_dir, exist_ok=True)
 
-        #checkfilename for ?!*etc
         safe_title = re.sub(r'[\\/*?:"<>|]', "", title[song_choice - 1])
         filename = f"{safe_title} Moosified.txt"
         filepath = os.path.join(moosified_dir, filename)
@@ -319,10 +317,6 @@ def moosefy_song():
         artisttoprint = artist[song_choice - 1].lower()
 
         print(f"{titletoprint} by {artisttoprint} has been moos-ified!\nFile saved at ./{filepath}\n{ascii_art}")
-
-
-
-
 
 # task 7
 
@@ -495,54 +489,99 @@ def forecast_upcoming_concerts():
 
 
 #task 9
-
 def create_lyrics_dict():
 
-    list_json = sorted(os.listdir("dataset/songs/"))
-    
-    for file in list_json:
-        file_name = "dataset/songs/" + file
-        with open(file_name, encoding="utf8") as f:
-            song_info = json.load(f)
-            title = song_info.get("title", "Unknown Title")
-            artist = song_info.get("artist", "Unknown Artist")
-            lyrics = song_info.get("lyrics", "")
-            
-            lyrics= lyrics.lower()
-            lyrics = re.sub(r'[.,!?"]', '', lyrics)
-            lyrics = re.sub(r'[\']', '', lyrics)
-            lyrics = re.sub(r'\s+', ' ', lyrics).strip()
+    global inverted_index
 
-            for word in lyrics.split():
-                if word not in search_by_lyrics_dict:
-                    search_by_lyrics_dict[word] = []
-                search_by_lyrics_dict[word].append((title, artist))
+    os.makedirs("dataset", exist_ok=True)
+    inverted_path = os.path.join("dataset", "inverted_index.json")
+
+    if os.path.exists(inverted_path) and os.path.getsize(inverted_path) > 0:
+        try:
+            with open(inverted_path, "r", encoding="utf8") as f:
+                loaded_data = json.load(f)
+
+            inverted_index = {}
+            for word, lst in loaded_data.items():
+                converted_list = []
+                for item in lst:
+                    converted_list.append(tuple(item))
+                inverted_index[word] = converted_list
+            return
+        
+        except Exception:
+            inverted_index = {}
+
+    temp_index = {}
+    list_json = sorted(os.listdir("dataset/songs/"))
+
+    for file in list_json:
+        file_path = os.path.join("dataset", "songs", file)
+        try:
+            with open(file_path, encoding="utf8") as f:
+                song_info = json.load(f)
+        except Exception:
+            continue
+
+        title = song_info.get("title", "Unknown Title")
+        artist = song_info.get("artist", "Unknown Artist")
+        lyrics = song_info.get("lyrics", "")
+        if not lyrics:
+            continue
+
+        lyrics = lyrics.lower()
+        lyrics = re.sub(r'[.,!?"]', '', lyrics)
+        lyrics = re.sub(r"[\']", '', lyrics)
+        lyrics = re.sub(r'\s+', ' ', lyrics).strip()
+
+        for word in lyrics.split():
+            temp_index.setdefault(word, set()).add((title, artist))
+
+    to_save = {}
+    for w, lst in temp_index.items():
+        sorted_items = sorted(lst)
+        converted_items = []
+        for title, artist in sorted_items:
+            converted_items.append([title, artist])
+        to_save[w] = converted_items
+    try:
+        with open(inverted_path, "w", encoding="utf8") as f:
+            json.dump(to_save, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+    inverted_index = {}
+    for word, entries in to_save.items():
+        converted_entries = []
+        for entry in entries:
+            converted_entries.append(tuple(entry))
+        inverted_index[word] = converted_entries
 
 def search_by_lyrics():
-    if not search_by_lyrics_dict:
+    if not inverted_index:
         create_lyrics_dict()
 
-    user_input = input("Please input a word or phrase to search for: ").lower()
-    user_input = re.sub(r'[.,!?"]', '', user_input)
-    user_input = re.sub(r'\s+', ' ', user_input).strip()
+    search_phrase = input("Please input a word or phrase to search for: ").lower()
+    search_phrase = re.sub(r'[.,!?"]', '', search_phrase)
+    search_phrase = re.sub(r'\s+', ' ', search_phrase).strip()
 
-    words = user_input.split()
+    words = search_phrase.split()
     if not words:
         print("No valid input provided.")
         return
 
-    score_map = {} 
+    score_map = {}  
     for word in words:
-        if word in search_by_lyrics_dict:
-            for song in set(search_by_lyrics_dict[word]):
+        if word in inverted_index:
+            for song in set(inverted_index[word]):
                 score_map[song] = score_map.get(song, 0) + 1
 
     if not score_map:
-        print(f"No songs found containing the phrase '{user_input}'.")
-        sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
-        for (title, artist), score in sorted_songs:
-            print(f"- {title} with a score of {score}")
+        print(f"No songs found containing the phrase '{search_phrase}'.")
+        return
+
     sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
+    print(f"Songs matching '{search_phrase}':")
     for (title, artist), score in sorted_songs:
         print(f"- {title} with a score of {score}")
 

@@ -3,6 +3,7 @@ import helper_functions as hf
 
 
 
+<<<<<<< Updated upstream
 
 artists_name_idname = {}
 artist_genre = {}
@@ -10,10 +11,17 @@ artist_genre = {}
 search_by_lyrics_dict = {}
 inverted_index = {}
 =======
+=======
+artists_name_idname = {}
+artist_genre = {}
+>>>>>>> Stashed changes
 albums_name_release = {}
 inverted_index = {}
 
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 months = ["January","February","March","April","May","June"]
 months += ["July","August","September","October","November","December"]
@@ -46,7 +54,11 @@ def read_jsons(folder_path):
 =======
 
 
+
 # tast 1
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 def get_artists_name_id():
     folder_path = "dataset/artists"
@@ -62,6 +74,7 @@ def list_all_artists():
     for value in artists_low_idnamegenre.values():
         print(f"- {value[1]}")
 
+<<<<<<< Updated upstream
 # task 1
 
 def print_all_artists():
@@ -76,6 +89,9 @@ def print_all_artists():
 def all_albums_artist():
     if not artists_low_idnamegenre:
 =======
+=======
+# task 2
+>>>>>>> Stashed changes
 def get_all_albums_by_artist():
 
     if not artists_name_idname:
@@ -85,8 +101,12 @@ def get_all_albums_by_artist():
     print_all_artists()
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     l_artists_name_id = artists_low_idnamegenre
     user_input = input("Please input the name of an artist: ")
+=======
+    artist_name_input = input("Please input the name of one of the following artists: ")
+>>>>>>> Stashed changes
 =======
     artist_name_input = input("Please input the name of one of the following artists: ")
 >>>>>>> Stashed changes
@@ -138,8 +158,11 @@ def get_all_albums_by_artist():
 # task 3
 def get_top_tracks():
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     list_all_artists()
 =======
+=======
+>>>>>>> Stashed changes
 
     if not artists_name_idname:
         get_artists_name_id()
@@ -151,6 +174,7 @@ def get_top_tracks():
     artist_found = hf.find_artist(chosen_art,artists_low_idnamegenre)
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     if artist_found:
 
         artist = artists_low_idnamegenre[chosen_art][1]
@@ -158,6 +182,8 @@ def get_top_tracks():
     
         print(f"Listing top tracks for {artist}...")
 =======
+=======
+>>>>>>> Stashed changes
     for key,value in artists_name_idname.items(): #  def get_artist_id
         if key == chosen_art.lower():
             artist_id = value[0]
@@ -199,6 +225,9 @@ def get_top_tracks():
         elif track_popul[1] > 70:
             print(f"- \"{track_popul[0]}\" has a popularity score of {track_popul[1]}. It is made for the charts!")
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 #task 4
 def export_artist_data():
@@ -216,7 +245,10 @@ def export_artist_data():
     csv_path = os.path.join("dataset", "artist-data.csv")
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     l_artists_name_id = artists_low_idnamegenre
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
     artist_name = input("Please input the name of one of the following artists: ")
@@ -386,8 +418,11 @@ def moosefy_song():
 def get_longest_uniq_seq():
     
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
    
 =======
+=======
+>>>>>>> Stashed changes
 
 
     list_json = sorted(os.listdir("dataset/songs/"))

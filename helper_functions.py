@@ -1,4 +1,5 @@
-import os,json,re,csv
+import os,json,re,csv,calendar
+from typing import List, Dict, Optional, Tuple
 
 def read_jsons(folder_path):
     list_json = sorted(os.listdir(folder_path))
@@ -21,7 +22,7 @@ def get_artists_info():
     folder_path = "dataset/artists"
     artists_low_idnamegenre = {}
     for artist_info in read_jsons(folder_path).values():
-        artists_low_idnamegenre[artist_info["name"].lower()] = (artist_info["id"],artist_info["name"],artist_info["genres"])
+        artists_low_idnamegenre[artist_info["name"].lower()] = {"id":artist_info["id"],"name":artist_info["name"],"genres":artist_info["genres"]}
     return artists_low_idnamegenre
 
 # task 3
@@ -142,6 +143,9 @@ def get_date_suffix(concerts_weather):
 
     dates = []
 
+    months = ["January","February","March","April","May","June"]
+    months += ["July","August","September","October","November","December"]
+
     for concert in concerts_weather:  
         date_str = concert["date"]  # e.g. '2025-09-25'
         
@@ -153,9 +157,9 @@ def get_date_suffix(concerts_weather):
         else:
             suffix = {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
         
-        month_name = months[int(month) - 1]
+        month_str = months([int(month) - 1])
         
-        dates.append(f"{month_name} {day}{suffix} {year}")
+        dates.append(f"{month_str} {day}{suffix} {year}")
     return dates
 
 def get_recommendations(concerts_weather):
@@ -193,6 +197,7 @@ def print_recom(weather_recom, concerts_weather, dates, chosen_art):
         recom = weather_recom[index]
         print(f"- {concert["city"]}, {date}. {recom}")
         index += 1
+# task 9
 
 def safe_load_json(path: str) -> Optional[dict]:
     """Return parsed JSON or None if missing/invalid."""
@@ -215,6 +220,8 @@ def sanitize_text(text: str) -> str:
 def format_release_date(release_date: str, precision: str) -> str:
     if not release_date:
         return "Date Not Found"
+    months = ["January","February","March","April","May","June"]
+    months += ["July","August","September","October","November","December"]
     if precision == "day":
         year, month, day = release_date.split('-')
         month_name = months[int(month) - 1]

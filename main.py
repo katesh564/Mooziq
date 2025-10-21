@@ -1,14 +1,13 @@
 import json,os,re,csv
 import helper_functions as hf
 
-artists_name_idname = {}
+artists_low_idnamegenre = {}
 artist_genre = {}
 search_by_lyrics_dict = {}
 inverted_index = {}
 albums_name_release = {}
 
-months = ["January","February","March","April","May","June"]
-months += ["July","August","September","October","November","December"]
+
  
 
 ascii_art = r''' ___            ___
@@ -18,7 +17,7 @@ ascii_art = r''' ___            ___
  \___  \____/   __/
      \_       _/
        | @ @  \__
-       |32
+       |
      _/     /\
     /o)  (o/\ \__
     \_____/ /
@@ -26,7 +25,7 @@ ascii_art = r''' ___            ___
 '''
 # task 1
 
-artists_low_idnamegenre = hf.get_artists_info() # dict with artist.lower as key and value as dict with keys: id, name, genre
+artists_low_idnamegenre = hf.get_artists_info()
 
 def list_all_artists():
 
@@ -35,10 +34,11 @@ def list_all_artists():
 # task 2
 def get_all_albums_by_artist():
 
+    list_all_artists()
     artist_name_input = input("Please input the name of one of the following artists: ")
 
-    if artist_name_input.lower() in artists_name_idname:
-        chosen_id = artists_name_idname[artist_name_input.lower()][0]
+    if artist_name_input.lower() in artists_low_idnamegenre:
+        chosen_id = artists_low_idnamegenre[artist_name_input.lower()]["id"]
     else:
         print("Artist not found in the database.")
         return
@@ -49,7 +49,7 @@ def get_all_albums_by_artist():
         print("Couldn't find any albums.")
         return
 
-    print(f'Listing all available albums from {artists_name_idname[artist_name_input.lower()][1]}...')
+    print(f'Listing all available albums from {artists_low_idnamegenre[artist_name_input.lower()]["name"]}...')
     album_info = hf.safe_load_json(album_path)
     if not album_info:
         print("Couldn't read album info.")
@@ -94,21 +94,18 @@ def get_top_tracks():
     
 # task 4
 def export_artist_data():
-    if not artists_low_idnamegenre:
-        hf.get_artists_name_id()
     
-    for value in artists_low_idnamegenre.values():
-        print(f"- {value[1]}")
+    list_all_artists()
 
     header = ["artist_id","artist_name","number_of_albums","top_track_1","top_track_2","genres"]
     os.makedirs("dataset", exist_ok=True)
     csv_path = os.path.join("dataset", "artist-data.csv")
 
     artist_name = input("Please input the name of one of the following artists: ").strip()
-    if artist_name.lower() not in artists_name_idname:
+    if artist_name.lower() not in artists_low_idnamegenre:
         print("Artist not found in the database.")
         return
-    artist_info = artists_name_idname[artist_name.lower()]
+    artist_info = artists_low_idnamegenre[artist_name.lower()]
     artist_id_str = str(artist_info[0])
 
     # count albums
@@ -134,7 +131,7 @@ def export_artist_data():
 
     row_dict = {
         "artist_id": artist_id_str,
-        "artist_name": artist_info[1],
+        "artist_name": artist_info["name"],
         "number_of_albums": str(num_albums),
         "top_track_1": top1,
         "top_track_2": top2,
@@ -151,16 +148,7 @@ def export_artist_data():
 def get_albums_by_year():
     hf.get_artists_info()
 
-    artist_found = hf.find_artist()
-
-    if artist_found:
-        
-
-        try:
-            chosen_year = int(input("Please enter a year: "))
-        except ValueError:
-            print("Invalid year.")
-            return
+    chosen_year = int(input("Please enter a year:\n "))
 
     all_albums = []
     album_artist = []
@@ -176,6 +164,8 @@ def get_albums_by_year():
                 album_artist.append((album["name"],artist_name))
     
     hf.print_all_albums(album_artist,chosen_year)
+        
+
         
 
 # task 6
@@ -241,13 +231,11 @@ def get_longest_uniq_seq():
 
             print(f"The length of the longest unique sequence in {song_title} is {max_length}")
         else:
-            print("Song Not Found")
+            print("Song Not Found")    
     except ValueError:
         print("Error")
+
 # task 8
-def get_for_forecast_upcoming_concerts():
-    if not artists_name_idname:
-        get_artists_name_id()
 
 def forecast_upcoming_concerts():
     hf.get_artists_info()
@@ -272,110 +260,14 @@ def forecast_upcoming_concerts():
         weather_info = hf.read_csv(weather_file_path)
         concerts_weather = hf.get_concerts_weather(weather_info, artists_ctcode_date)
 
-        dates = hf.get_date_suffix(concerts_weather)
+        dates = hf.get_date_suffix()
+
         weather_recom = hf.get_recommendations(concerts_weather)
 
-        print_recom(weather_recom, concerts_weather, dates)
-
-                
-        def print_recom(weather_recom, concerts_weather, dates):
-
-            if len(concerts_weather) > 1:
-                print(f"Fetching weather forecast for {chosen_art} concerts...")
-                print(f"{chosen_art} has {len(concerts_weather)} upcoming concerts:")
-            else:
-                print(f"Fetching weather forecast for \"{chosen_art}\" concerts...")
-                print(f"{chosen_art} has 1 upcoming concert:")
-
-            index = 0
-            for concert in concerts_weather:
-                date = dates[index]
-                recom = weather_recom[index]
-                print(f"- {concert["city"]}, {date}. {recom}")
-                index += 1
+        hf.print_recom(weather_recom, concerts_weather, dates)
     else:
         print("Artist Not Found")
 
-
-
-
-#task 9
-    concerts_path = "dataset/concerts/concerts.csv"
-    if not os.path.exists(concerts_path := concerts_path):
-        print("No concerts data.")
-        return
-
-    dict_artists_ctcode_date = {}
-    with open(concerts_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            day = f"{int(row['day']):02d}"
-            month = f"{int(row['month']):02d}"
-            year = row["year"]
-            date = f"{year}-{month}-{day}"
-            dict_artists_ctcode_date.setdefault(row["artist"], []).append((row["city_code"], date))
-
-    print("Upcoming artists:")
-    for key in dict_artists_ctcode_date.keys():
-        print(f"- {key}")
-
-    user_choice = input("Please input the name of one of the following artists: ").strip().lower()
-    if user_choice not in artists_low_idnamegenre:
-        print("Artist Not Found")
-        return
-    chosen_art = artists_low_idnamegenre[user_choice][1]
-
-    weather_path = "dataset/weather/weather.csv"
-    if not os.path.exists(weather_path):
-        print("No weather data.")
-        return
-
-    weather_rows = []
-    with open(weather_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        weather_rows = list(reader)
-
-    weather_concerts = []
-    for city_code, date in dict_artists_ctcode_date.get(chosen_art, []):
-        for w in weather_rows:
-            if w.get("city_code") == city_code and w.get("date") == date:
-                weather_concerts.append(w)
-
-    if not weather_concerts:
-        print(f"No weather info for {chosen_art} concerts.")
-        return
-
-    list_city_dates = []
-    for concert in weather_concerts:
-        date_str = concert["date"]
-        # use helper for formatting day precision
-        list_city_dates.append((concert["city"], hf.format_release_date(date_str, "day")))
-
-    weather_recom = []
-    for concert in weather_concerts:
-        recommend = ""
-        if int(concert.get("temperature_min", 0)) > 10 and float(concert.get("precipitation", 0)) < 2.3:
-            recommend += "Perfect weather!"
-        if int(concert.get("temperature_min", 0)) <= 10:
-            recommend += "Wear warm clothes. "
-        if float(concert.get("precipitation", 0)) >= 2.3:
-            if int(concert.get("wind_speed", 0)) < 15:
-                recommend += "Bring an umbrella."
-            else:
-                recommend += "Bring a rain jacket."
-        weather_recom.append(recommend)
-
-    if len(weather_concerts) > 1:
-        print(f"Fetching weather forecast for {chosen_art} concerts...")
-        print(f"{chosen_art} has {len(weather_concerts)} upcoming concerts:")
-    else:
-        print(f"Fetching weather forecast for \"{chosen_art}\" concerts...")
-        print(f"{chosen_art} has {len(weather_concerts)} upcoming concert:")
-
-    for idx, concert in enumerate(weather_concerts):
-        date = list_city_dates[idx][1]
-        recom = weather_recom[idx]
-        print(f"- {concert['city']}, {date}. {recom}")
 
 # task 9
 def create_lyrics_dict():
@@ -453,7 +345,7 @@ def main():
 
             match menu_choice:
                 case 1:
-                    print_all_artists()
+                    list_all_artists()
                 case 2:
                     get_all_albums_by_artist()
                 case 3:
@@ -467,7 +359,7 @@ def main():
                 case 7:
                     get_longest_uniq_seq()
                 case 8:
-                    get_for_forecast_upcoming_concerts()
+                    forecast_upcoming_concerts()
                 case 9:
                     search_by_lyrics()
                 case 10:

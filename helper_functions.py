@@ -1,5 +1,45 @@
-import os,json,re,csv,calendar
-from typing import List, Dict, Optional, Tuple
+import os,json,re,csv
+
+# task 1 
+      
+def get_artists_info():
+    folder_path = "dataset/artists"
+    artists_low_idnamegenre = {}
+    for artist_info in read_jsons(folder_path).values():
+        artists_low_idnamegenre[artist_info["name"].lower()] = {"id":artist_info["id"],"name":artist_info["name"],"genres":artist_info["genres"]}
+    return artists_low_idnamegenre
+
+#task 2
+
+def format_release_date(release_date, precision):
+    if not release_date:
+        return "Date Not Found"
+    months = ["January","February","March","April","May","June"]
+    months += ["July","August","September","October","November","December"]
+    if precision == "day":
+        year, month, day = release_date.split('-')
+        month_name = months[int(month) - 1]
+        day_int = int(day)
+        if 11 <= day_int <= 13:
+            suffix = "th"
+        else:
+            suffix = {1: "st", 2: "nd", 3: "rd"}.get(day_int % 10, "th")
+        return f"{month_name} {day_int}{suffix} {year}"
+    if precision == "month":
+        year, month = release_date.split('-')[:2]
+        month_name = months[int(month) - 1]
+        return f"{month_name} {year}"
+    return release_date
+
+# task 3
+
+def find_artist(chosen_art,artists_name_idnamegenre):    
+        artist_found = False
+        for key in artists_name_idnamegenre.keys():
+            if key == chosen_art.lower():
+                artist_found = True
+                return artist_found
+        return False
 
 def read_jsons(folder_path):
     list_json = sorted(os.listdir(folder_path))
@@ -11,32 +51,6 @@ def read_jsons(folder_path):
             file_content = json.load(file)
             file_name_data[file_name] = file_content
     return file_name_data
-
-def read_csv(file_path):
-    csv_rows = []
-    with open(file_path,"r",encoding = "utf-8") as file:
-        files_content = csv.DictReader(file)
-        for row in files_content:
-            csv_rows.append(row)
-    return csv_rows
-           
-
-def get_artists_info():
-    folder_path = "dataset/artists"
-    artists_low_idnamegenre = {}
-    for artist_info in read_jsons(folder_path).values():
-        artists_low_idnamegenre[artist_info["name"].lower()] = {"id":artist_info["id"],"name":artist_info["name"],"genres":artist_info["genres"]}
-    return artists_low_idnamegenre
-
-# task 3
-def find_artist(chosen_art,artists_name_idnamegenre):    
-        artist_found = False
-        for key in artists_name_idnamegenre.keys():
-            if key == chosen_art.lower():
-                artist_found = True
-                return artist_found
-        return False
-
 
 def print_tracks_popularity(list_track_popul):
     for track_popul in list_track_popul:
@@ -53,7 +67,38 @@ def print_tracks_popularity(list_track_popul):
         elif popularity > 70:
             print(f"- \"{track}\" has a popularity score of {popularity}. It is made for the charts!")
 
+#task 4
+
+def write_csv_rows(path, header, rows):
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w", newline='', encoding="utf8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=header)
+        writer.writeheader()
+        writer.writerows(rows)
+
+def update_or_append_csv(path, header, row, key_field):
+    rows = read_csv_rows(path)
+    updated = False
+    for r in rows:
+        if r.get(key_field) == row.get(key_field):
+            r.update(row)
+            updated = True
+            break
+    if not updated:
+        rows.append(row)
+    write_csv_rows(path, header, rows)
+    return updated
+
+
 # task 5
+
+def sanitize_text(text):
+    if text is None:
+        return ""
+    txt = text
+    txt = re.sub(r"[.,!?\"'()\/:;]", "", txt)
+    txt = re.sub(r'\s+', ' ', txt).strip()
+    return txt
 
 def find_artist_by_id(artist_id,artists_low_idnamegenre):
     for value in artists_low_idnamegenre.values():
@@ -69,6 +114,19 @@ def print_all_albums(list_album_artist,chosen_year):
             for album_artist in list_album_artist:
                 print(f"- \"{album_artist[0]}\" by {album_artist[1]}.")
 
+#task 6
+
+def get_song_entries():
+    out = []
+    folder = os.path.join("dataset", "songs")
+    for fname in sorted(os.listdir(folder)):
+        full = os.path.join(folder, fname)
+        data = safe_load_json(full)
+        if not data:
+            continue
+        out.append((data.get("title", "Unknown Title"), data.get("artist", "Unknown Artist"), data.get("lyrics", "")))
+    return out
+
 # task 7
 
 def get_available_songs():
@@ -79,13 +137,6 @@ def get_available_songs():
         list_dict_title_artist_lyrics.append(data) 
     
     return list_dict_title_artist_lyrics
-
-def remove_punctuation(choice ,list_dict_title_artist_lyrics):
-    lyrics = re.sub("[\n\r]"," ",list_dict_title_artist_lyrics[choice]["lyrics"].lower())
-    lyrics = re.sub(r"\s+"," ",lyrics)
-    lyrics_word_list = re.sub(r"[!?.,'()]","",lyrics).split(" ")
-
-    return lyrics_word_list
 
 def get_all_lenghts(lyrics_word_list):
     unique_sequence = []
@@ -151,7 +202,7 @@ def get_date_suffix(concerts_weather):
     months += ["July","August","September","October","November","December"]
 
     for concert in concerts_weather:  
-        date_str = concert["date"]  # e.g. '2025-09-25'
+        date_str = concert["date"]
         
         year = int(date_str[:4])    
         month = int(date_str[5:7])     
@@ -201,10 +252,10 @@ def print_recom(weather_recom, concerts_weather, dates, chosen_art):
         recom = weather_recom[index]
         print(f"- {concert["city"]}, {date}. {recom}")
         index += 1
+
 # task 9
 
-def safe_load_json(path: str) -> Optional[dict]:
-    """Return parsed JSON or None if missing/invalid."""
+def safe_load_json(path):
     if not os.path.exists(path):
         return None
     try:
@@ -213,90 +264,30 @@ def safe_load_json(path: str) -> Optional[dict]:
     except (json.JSONDecodeError, OSError):
         return None
 
-def sanitize_text(text: str) -> str:
-    if text is None:
-        return ""
-    txt = text.lower()
-    txt = re.sub(r"[.,!?\"'()\/:;]", "", txt)
-    txt = re.sub(r'\s+', ' ', txt).strip()
-    return txt
+def read_csv_rows(file_path):
+    if not os.path.exists(file_path):
+        open(file_path, "w", encoding="utf-8").close()
+    csv_rows = []
+    with open(file_path,"r",encoding = "utf-8") as file:
+        files_content = csv.DictReader(file)
+        for row in files_content:
+            csv_rows.append(row)
+    return csv_rows
 
-def format_release_date(release_date: str, precision: str) -> str:
-    if not release_date:
-        return "Date Not Found"
-    months = ["January","February","March","April","May","June"]
-    months += ["July","August","September","October","November","December"]
-    if precision == "day":
-        year, month, day = release_date.split('-')
-        month_name = months[int(month) - 1]
-        day_int = int(day)
-        if 11 <= day_int <= 13:
-            suffix = "th"
-        else:
-            suffix = {1: "st", 2: "nd", 3: "rd"}.get(day_int % 10, "th")
-        return f"{month_name} {day_int}{suffix} {year}"
-    if precision == "month":
-        year, month = release_date.split('-')[:2]
-        month_name = months[int(month) - 1]
-        return f"{month_name} {year}"
-    return release_date
-
-def read_csv_rows(path: str) -> List[Dict[str, str]]:
-    if not os.path.exists(path) or os.path.getsize(path) == 0:
-        return []
-    with open(path, newline='', encoding="utf8") as csvfile:
-        return list(csv.DictReader(csvfile))
-
-def write_csv_rows(path: str, header: List[str], rows: List[dict]) -> None:
-    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    with open(path, "w", newline='', encoding="utf8") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=header)
-        writer.writeheader()
-        writer.writerows(rows)
-
-def update_or_append_csv(path: str, header: List[str], row: dict, key_field: str) -> bool:
-    rows = read_csv_rows(path)
-    updated = False
-    for r in rows:
-        if r.get(key_field) == row.get(key_field):
-            r.update(row)
-            updated = True
-            break
-    if not updated:
-        rows.append(row)
-    write_csv_rows(path, header, rows)
-    return updated
-
-def get_top_two_tracks_for_artist(artist_id: str) -> Tuple[str, str]:
-    path = os.path.join("dataset", "top_tracks", f"{artist_id}.json")
-    data = safe_load_json(path)
-    if not data:
-        return "", ""
-    tracks = data.get("tracks", [])
-    tracks_sorted = sorted(tracks, key=lambda x: x.get("popularity", 0), reverse=True)
-    t1 = tracks_sorted[0].get("name", "") if len(tracks_sorted) > 0 else ""
-    t2 = tracks_sorted[1].get("name", "") if len(tracks_sorted) > 1 else ""
-    return t1, t2
-
-def get_song_entries() -> List[Tuple[str, str, str]]:
-    out = []
-    folder = os.path.join("dataset", "songs")
-    for fname in sorted(os.listdir(folder)):
-        full = os.path.join(folder, fname)
-        data = safe_load_json(full)
-        if not data:
-            continue
-        out.append((data.get("title", "Unknown Title"), data.get("artist", "Unknown Artist"), data.get("lyrics", "")))
-    return out
-
-def load_inverted_index(path: str) -> Dict[str, List[Tuple[str, str]]]:
-    data = safe_load_json(path)
-    if not data:
-        return {}
-    return {w: [tuple(item) for item in lst] for w, lst in data.items()}
-
-def save_inverted_index(path: str, index: Dict[str, List[Tuple[str, str]]]) -> None:
+def save_inverted_index(path, index):
     to_save = {w: [[t, a] for (t, a) in lst] for w, lst in index.items()}
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w", encoding="utf8") as f:
         json.dump(to_save, f, ensure_ascii=False, indent=2)
+
+def load_inverted_index(path):
+    data = safe_load_json(path)
+    if not data:
+        return {}
+    index = {}
+    for word, items in data.items():
+        tuples_list = []
+        for item in items:
+            tuples_list.append(tuple(item))
+        index[word] = tuples_list
+    return index

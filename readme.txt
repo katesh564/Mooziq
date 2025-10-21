@@ -1,1 +1,9 @@
-    
+Task 1 - Kateryna
+Task 2 - Andra
+Task 3 - Kateryna
+Task 4 - Andra
+Task 5 - Kateryna
+Task 6 - Andra
+Task 7 - Kateryna
+Task 8 - Kateryna
+Task 9 - Andra

@@ -6,10 +6,6 @@ search_by_lyrics_dict = {}
 inverted_index = {}
 albums_name_release = {}
 artists_low_idnamegenre = hf.get_artists_info()
-
-
- 
-
 ascii_art = r''' ___            ___
 /   \          /   \
 \_   \        /  __/
@@ -23,14 +19,14 @@ ascii_art = r''' ___            ___
     \_____/ /
       \____/
 '''
+
+
 # task 1
-
-
-
 def list_all_artists():
 
     for value in artists_low_idnamegenre.values():
         print(f"- {value["name"]}")
+
 # task 2
 def get_all_albums_by_artist():
 
@@ -66,7 +62,6 @@ def get_all_albums_by_artist():
         print(f'- "{name}" was released in {release_date}.')
 
 # task 3
-   
 def get_top_tracks():
     list_all_artists()
 
@@ -100,6 +95,9 @@ def export_artist_data():
     header = ["artist_id","artist_name","number_of_albums","top_track_1","top_track_2","genres"]
     os.makedirs("dataset", exist_ok=True)
     csv_path = os.path.join("dataset", "artist-data.csv")
+
+    if not os.path.exists(csv_path):
+        open(csv_path, "w", encoding="utf-8").close()
 
     artist_name = input("Please input the name of one of the following artists: ").strip()
     if artist_name.lower() not in artists_low_idnamegenre:
@@ -145,7 +143,7 @@ def export_artist_data():
 
 # task 5
 def get_albums_by_year():
-    hf.get_artists_info()
+
     try:
         chosen_year = int(input("Please enter a year: "))
     except ValueError:
@@ -166,8 +164,6 @@ def get_albums_by_year():
                 album_artist.append((album["name"],artist_name))
     
     hf.print_all_albums(album_artist,chosen_year)
-        
-
         
 
 # task 6
@@ -200,7 +196,7 @@ def moosefy_song():
 
     moosified_dir = "moosified"
     os.makedirs(moosified_dir, exist_ok=True)
-    safe_title = re.sub(r'[\\/*?:"<>|]', "", title)
+    safe_title = hf.sanitize_text(title)
     filename = f"{safe_title} Moosified.txt"
     filepath = os.path.join(moosified_dir, filename)
     with open(filepath, "w", encoding="utf8") as f:
@@ -212,19 +208,21 @@ def moosefy_song():
 def get_longest_uniq_seq():
     
     print("Available songs: ")
-#----------------------task 6
+
     list_dict_title_artist_lyrics = hf.get_available_songs()
 
     song_number = 0
     for song in list_dict_title_artist_lyrics:
         song_number += 1
         print(f"{song_number}. {song["title"]} by {song["artist"]}")
-#--------------------------------------------
+
     try:
         choice = int(input("Please select one of the following songs (number): ")) - 1
 
         if choice in range(len(list_dict_title_artist_lyrics) + 1):
-            lyrics_word_list = hf.remove_punctuation(choice ,list_dict_title_artist_lyrics)
+
+
+            lyrics_word_list = (hf.sanitize_text(list_dict_title_artist_lyrics[choice]["lyrics"].lower()).lower()).split(" ")
 
             all_lengths = hf.get_all_lenghts(lyrics_word_list)
 
@@ -240,10 +238,9 @@ def get_longest_uniq_seq():
 # task 8
 
 def forecast_upcoming_concerts():
-    hf.get_artists_info()
 
     concerts_file_path = "dataset/concerts/concerts.csv"
-    concerts_info = hf.read_csv(concerts_file_path)
+    concerts_info = hf.read_csv_rows(concerts_file_path)
     artists_ctcode_date = hf.get_artists_ctcode_date(concerts_info)
 
     print("Upcoming artists:")
@@ -259,7 +256,7 @@ def forecast_upcoming_concerts():
         chosen_art = artists_low_idnamegenre[user_choice]["name"]
         weather_file_path = "dataset/weather/weather.csv"
 
-        weather_info = hf.read_csv(weather_file_path)
+        weather_info = hf.read_csv_rows(weather_file_path)
         concerts_weather = hf.get_concerts_weather(weather_info, artists_ctcode_date, chosen_art)
 
         dates = hf.get_date_suffix(concerts_weather)
@@ -286,22 +283,36 @@ def create_lyrics_dict():
     for title, artist, lyrics in hf.get_song_entries():
         if not lyrics:
             continue
-        txt = hf.sanitize_text(lyrics)
+        txt = hf.sanitize_text(lyrics).lower()
         for word in txt.split():
             temp_index.setdefault(word, set()).add((title, artist))
 
-    # convert to list-of-lists for JSON and save via helper
-    to_save = {w: [[t, a] for (t, a) in sorted(lst)] for w, lst in temp_index.items()}
-    hf.save_inverted_index(inverted_path, {w: lst for w, lst in to_save.items()})
-    # set internal inverted_index as tuples
-    inverted_index = {w: [tuple(item) for item in lst] for w, lst in to_save.items()}
+    word_save = {}
+    for word, pairs in temp_index.items():
+
+        sorted_pairs = sorted(pairs)
+        list_of_lists = []
+        for title, artist in sorted_pairs:
+            list_of_lists.append([title, artist])
+        word_save[word] = list_of_lists
+
+    hf.save_inverted_index(inverted_path, word_save)
+
+    inverted_index = {}
+    for word, list_of_lists in word_save.items():
+        tuple_list = []
+        for title_artist in list_of_lists:
+            title = title_artist[0]
+            artist = title_artist[1]
+            tuple_list.append((title, artist))
+        inverted_index[word] = tuple_list
 
 def search_by_lyrics():
     if not inverted_index:
         create_lyrics_dict()
 
     search_phrase = input("Please input a word or phrase to search for: ").lower()
-    search_phrase = hf.sanitize_text(search_phrase)
+    search_phrase = hf.sanitize_text(search_phrase).lower()
     words = search_phrase.split()
     if not words:
         print("No valid input provided.")
@@ -319,7 +330,7 @@ def search_by_lyrics():
 
     sorted_songs = sorted(score_map.items(), key=lambda kv: (-kv[1], kv[0][0].lower()))
     print(f"Songs matching '{search_phrase}':")
-    for (title, artist), score in sorted_songs:
+    for (title, _), score in sorted_songs:
         print(f"- {title} with a score of {score}")
 
 # main
@@ -378,4 +389,3 @@ if __name__ == '__main__':
     print("Welcome to Mooziq!")
     print("Choose one of the options bellow:")
     main()
-        

@@ -1,11 +1,11 @@
 import json,os,re,csv
 import helper_functions as hf
 
-artists_low_idnamegenre = {}
-artist_genre = {}
+
 search_by_lyrics_dict = {}
 inverted_index = {}
 albums_name_release = {}
+artists_low_idnamegenre = hf.get_artists_info()
 
 
  
@@ -25,7 +25,7 @@ ascii_art = r''' ___            ___
 '''
 # task 1
 
-artists_low_idnamegenre = hf.get_artists_info()
+
 
 def list_all_artists():
 
@@ -70,7 +70,7 @@ def get_all_albums_by_artist():
 def get_top_tracks():
     list_all_artists()
 
-    chosen_art = input("Please input the name of an artist: ").lower()
+    chosen_art = input("Please input the name of one of the following artists: ").lower()
     artist_found = hf.find_artist(chosen_art,artists_low_idnamegenre)
 
     if artist_found:
@@ -106,7 +106,7 @@ def export_artist_data():
         print("Artist not found in the database.")
         return
     artist_info = artists_low_idnamegenre[artist_name.lower()]
-    artist_id_str = str(artist_info[0])
+    artist_id_str = str(artist_info["id"])
 
     # count albums
     album_file = os.path.join("dataset","albums", f"{artist_id_str}.json")
@@ -126,8 +126,7 @@ def export_artist_data():
             top2 = tracks[1].get("name", "")
 
     # genres
-    genres_list = artist_genre.get(artist_id_str, [])
-    genres_str = ", ".join(genres_list) if genres_list else ""
+    genres_str = ", ".join(artist_info["genres"]) if artist_info["genres"] else ""
 
     row_dict = {
         "artist_id": artist_id_str,
@@ -147,15 +146,18 @@ def export_artist_data():
 # task 5
 def get_albums_by_year():
     hf.get_artists_info()
-
-    chosen_year = int(input("Please enter a year:\n "))
+    try:
+        chosen_year = int(input("Please enter a year: "))
+    except ValueError:
+        print("ERROR: Integer required")
+        return
 
     all_albums = []
     album_artist = []
 
     folder_path = "dataset/albums"
 
-    for file_name, data in hf.read_jsons(folder_path):
+    for file_name, data in hf.read_jsons(folder_path).items():
         all_albums = data["items"]
         artist_name = hf.find_artist_by_id(file_name[:-5],artists_low_idnamegenre)
 
@@ -250,7 +252,7 @@ def forecast_upcoming_concerts():
 
     user_choice = input("Please input the name of one of the following artists: ").lower()
     
-    artist_found = hf.find_artist(user_choice)
+    artist_found = hf.find_artist(user_choice, artists_low_idnamegenre)
 
     if artist_found:
 
@@ -258,13 +260,13 @@ def forecast_upcoming_concerts():
         weather_file_path = "dataset/weather/weather.csv"
 
         weather_info = hf.read_csv(weather_file_path)
-        concerts_weather = hf.get_concerts_weather(weather_info, artists_ctcode_date)
+        concerts_weather = hf.get_concerts_weather(weather_info, artists_ctcode_date, chosen_art)
 
-        dates = hf.get_date_suffix()
+        dates = hf.get_date_suffix(concerts_weather)
 
         weather_recom = hf.get_recommendations(concerts_weather)
 
-        hf.print_recom(weather_recom, concerts_weather, dates)
+        hf.print_recom(weather_recom, concerts_weather, dates, chosen_art)
     else:
         print("Artist Not Found")
 
@@ -322,29 +324,29 @@ def search_by_lyrics():
 
 # main
 def main():
-    try:
-        menu_choice = 0
-        while menu_choice != 10:
-            menu = """
-            1.Get All Artists
-            2.Get All Albums By An Artist
-            3.Get Top Tracks By An Artist
-            4.Export Artist Data
-            5.Get Released Albums By Year
-            6.Analyze Song Lyrics
-            7.Calculate Longest Unique Word Sequence In A Song
-            8.Weather Forecast For Upcoming Concerts
-            9.Search Song By Lyrics
-            10.Exit"""
-            print(menu)
-            try:
-                menu_choice = int(input("Type your option: ").strip())
-            except ValueError:
-                print("Invalid input: please enter a number.")
-                continue
+    
+    menu_choice = 0
+    while menu_choice != 10:
+        
+        menu = """
+        1.Get All Artists
+        2.Get All Albums By An Artist
+        3.Get Top Tracks By An Artist
+        4.Export Artist Data
+        5.Get Released Albums By Year
+        6.Analyze Song Lyrics
+        7.Calculate Longest Unique Word Sequence In A Song
+        8.Weather Forecast For Upcoming Concerts
+        9.Search Song By Lyrics
+        10.Exit"""
+        print(menu)
+        try:
+            menu_choice = int(input("Type your option: ").strip())
+            
 
             match menu_choice:
                 case 1:
+                    print("Artists found in the database:")
                     list_all_artists()
                 case 2:
                     get_all_albums_by_artist()
@@ -366,8 +368,11 @@ def main():
                     print("Thank you for using Mooziq! Have a nice day :)")
                 case _:
                     print("Error - Invalid option. Please input a number between 1 and 10.")
-    except ValueError:
-        print("Invalid input: ValueError")
+
+        except ValueError:
+            print("Invalid input: please enter a number.")
+            continue
+
 
 if __name__ == '__main__':
     print("Welcome to Mooziq!")

@@ -13,9 +13,12 @@ def read_jsons(folder_path):
     return file_name_data
 
 def read_csv(file_path):
+    csv_rows = []
     with open(file_path,"r",encoding = "utf-8") as file:
         files_content = csv.DictReader(file)
-    return files_content
+        for row in files_content:
+            csv_rows.append(row)
+    return csv_rows
            
 
 def get_artists_info():
@@ -113,20 +116,21 @@ def find_max_length(all_length):
 
 def get_artists_ctcode_date(concerts_info):
 
+    artists_ctcode_date = {}
     for concert in concerts_info: 
 
-        artists_ctcode_date = {}
+        
 
         day = f"{int(concert["day"]):02d}"
         month = f"{int(concert["month"]):02d}"
         year = concert["year"]
 
-    if concert["artist"] not in artists_ctcode_date.keys():
-        date = f"{year}-{month}-{day}"
-        artists_ctcode_date[concert["artist"]] = [(concert["city_code"],date)]
-    else:
-        date = date = f"{year}-{month}-{day}"
-        artists_ctcode_date[concert["artist"]].append((concert["city_code"],date))
+        if concert["artist"] not in artists_ctcode_date.keys():
+            date = f"{year}-{month}-{day}"
+            artists_ctcode_date[concert["artist"]] = [(concert["city_code"],date)]
+        else:
+            date = date = f"{year}-{month}-{day}"
+            artists_ctcode_date[concert["artist"]].append((concert["city_code"],date))
 
     return artists_ctcode_date
 
@@ -157,7 +161,7 @@ def get_date_suffix(concerts_weather):
         else:
             suffix = {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
         
-        month_str = months([int(month) - 1])
+        month_str = months[int(month) - 1]
         
         dates.append(f"{month_str} {day}{suffix} {year}")
     return dates
@@ -180,7 +184,7 @@ def get_recommendations(concerts_weather):
                         recommend += "Bring a rain jacket."
             
                 weather_recom.append(recommend)
-                return weather_recom
+            return weather_recom
             
 def print_recom(weather_recom, concerts_weather, dates, chosen_art):
 
@@ -296,12 +300,3 @@ def save_inverted_index(path: str, index: Dict[str, List[Tuple[str, str]]]) -> N
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w", encoding="utf8") as f:
         json.dump(to_save, f, ensure_ascii=False, indent=2)
-
-def read_jsons(folder_path):
-    list_json = sorted(os.listdir(folder_path))
-    file_name_data = {}
-    for file_name in list_json:
-        with open(f"{folder_path}/{file_name}", 'r',encoding = "utf-8") as file:
-            file_content = json.load(file)
-            file_name_data[file_name] = file_content
-    return file_name_data

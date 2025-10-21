@@ -14,37 +14,20 @@ ascii_art = r''' ___            ___
  \___  \____/   __/
      \_       _/
        | @ @  \__
-       |
+       |32
      _/     /\
     /o)  (o/\ \__
     \_____/ /
       \____/
 '''
 
-def read_jsons(folder_path):
-    list_json = sorted(os.listdir(folder_path))
-    
-    file_name_data = {}
 
-    for file_name in list_json:
-        with open(f"{folder_path}/{file_name}", 'r',encoding = "utf-8") as file:
-            file_content = json.load(file)
-            file_name_data[file_name] = file_content
-    return file_name_data
-
-def get_artists_name_id():
-    folder_path = "dataset/artists"
-    artists_low_idnamegenre = {}
-    for artist_info in read_jsons(folder_path).values():
-        artists_low_idnamegenre[artist_info["name"].lower()] = (artist_info["id"],artist_info["name"],artist_info["genres"])
-    return artists_low_idnamegenre
-
-artists_low_idnamegenre = get_artists_name_id() # dict with name.lower as key and value (id,name,genre)
+artists_low_idnamegenre = hf.get_artists_info() # dict with artist.lower as key and value as dict with keys: id, name, genre
 
 def list_all_artists():
 
     for value in artists_low_idnamegenre.values():
-        print(f"- {value[1]}")
+        print(f"- {value["name"]}")
 
 # task 1
 
@@ -53,13 +36,13 @@ def print_all_artists():
     print("Artists found in the database:")
 
     for value in artists_low_idnamegenre.values():
-        print(f"- {value[1]}")
+        print(f"- {value["name"]}")
 
 
 # task 2
 def all_albums_artist():
     if not artists_low_idnamegenre:
-        get_artists_name_id()
+        hf.get_artists_info()
     print_all_artists()
 
     l_artists_name_id = artists_low_idnamegenre
@@ -113,31 +96,28 @@ def all_albums_artist():
 
             print(f'- "{name}" was released in {release_date}.')
 
-
-
 # task 3
 def get_top_tracks():
     list_all_artists()
 
     chosen_art = input("Please input the name of an artist: ").lower()
-    artist_id = ""
     artist_found = hf.find_artist(chosen_art,artists_low_idnamegenre)
 
     if artist_found:
 
-        artist = artists_low_idnamegenre[chosen_art][1]
-        artist_id = artists_low_idnamegenre[chosen_art][0]
+        artist = artists_low_idnamegenre[chosen_art]["name"]
+        artist_id = artists_low_idnamegenre[chosen_art]["id"]
     
         print(f"Listing top tracks for {artist}...")
     
-        top_track_files = read_jsons("dataset/top_tracks")
-        list_tracks = top_track_files[f"{artist_id}.json"]["tracks"]
+        top_track_files = hf.read_jsons("dataset/top_tracks")
+        all_tracks = top_track_files[f"{artist_id}.json"]["tracks"]
        
-        list_track_popul = []
-        for track in list_tracks:
-            list_track_popul.append((track["name"],track["popularity"]))
+        track_popul = []
+        for track in all_tracks:
+            track_popul.append((track["name"],track["popularity"]))
         
-        hf.print_tracks_popularity(list_track_popul)
+        hf.print_tracks_popularity(track_popul)
     else:
         print("Artist Not Found")
  
@@ -145,7 +125,7 @@ def get_top_tracks():
 def export_artist_data():
 
     if not artists_low_idnamegenre:
-        get_artists_name_id()
+        hf.get_artists_name_id()
     
     for value in artists_low_idnamegenre.values():
         print(f"- {value[1]}")
@@ -233,38 +213,25 @@ def export_artist_data():
 # task 5
 
 def get_albums_by_year():
-    get_artists_name_id()
+    hf.get_artists_info()
 
     chosen_year = int(input("Please enter a year:\n "))
 
-   
-    list_albums = []
-    list_album_artist = [] # def list_album_artist(file_name_data)
+    all_albums = []
+    album_artist = []
 
     folder_path = "dataset/albums"
 
-    list_json = sorted(os.listdir("dataset/albums/")) # def read_json(folder_path)
-    for file_name in list_json:      
-        with open(f"dataset/albums/{file_name}", 'r',encoding="utf-8") as file:
-            albums_info = json.load(file)
-            list_albums = albums_info["items"] # def list_albums(file_name_data)
-            for album in list_albums:           # def list_album_artist(list_albums)
-                if int(album["release_date"][:4]) == chosen_year:
-                    for value in artists_low_idnamegenre.values():
-                        if value[0] == file_name[:-5]:
-                            list_album_artist.append((album["name"],value[1])) 
-    
-    list_album_artist.sort()
-    
-# def print_albums
+    for file_name, data in hf.read_jsons(folder_path):
+        all_albums = data["items"]
+        artist_name = hf.find_artist_by_id(file_name[:-5],artists_low_idnamegenre)
 
-    if len(list_album_artist) == 0:
-        print(f"No albums released in the year {chosen_year}.")
-    else:
-        print(f"Albums released in the year {chosen_year}:")
-        for album_artist in list_album_artist:
-            print(f"- \"{album_artist[0]}\" by {album_artist[1]}.")
+        for album in all_albums:          
+            if int(album["release_date"][:4]) == chosen_year:
+                album_artist.append((album["name"],artist_name))
     
+    hf.print_all_albums(album_artist,chosen_year)
+        
 
 #task 6 
 
@@ -275,7 +242,7 @@ def moosefy_song():
     title = []
     artist = []
     lyrics = []
-
+#------------------task 7
     print("Songs found in the database:")
     for file in list_json:
         file_name = "dataset/songs/" + file
@@ -287,6 +254,7 @@ def moosefy_song():
     
     for i in range(len(title)):
         print(f"{i+1}. {title[i]} by {artist[i]}")
+#-----------------------------------
     
     song_choice = int(input("Choose a song by typing its number: "))
     if song_choice < 1 or song_choice > len(title):
@@ -320,176 +288,85 @@ def moosefy_song():
 
         print(f"{titletoprint} by {artisttoprint} has been moos-ified!\nFile saved at ./{filepath}\n{ascii_art}")
 
-
-
-
-
 # task 7
 
 def get_longest_uniq_seq():
     
-   
-    list_dict_title_artist_lyrics = []
-
-    folder_path = "dataset/songs"
-
-    list_json = sorted(os.listdir("dataset/songs/")) # def read_json
-    for file_name in list_json:
-        with open(f"dataset/songs/{file_name}", 'r',encoding = "utf-8") as file:
-            song_info = json.load(file)
-            list_dict_title_artist_lyrics.append(song_info) # def list_songs_info(fale_name_data)
-    
-
     print("Available songs: ")
-    # def print_available_songs(list_dict_title_artist_lyrics)
-    x = 0
-    for song in list_dict_title_artist_lyrics:
-        x += 1
-        print(f"{x}. {song["title"]} by {song["artist"]}")
+#----------------------task 6
+    list_dict_title_artist_lyrics = hf.get_available_songs()
 
+    song_number = 0
+    for song in list_dict_title_artist_lyrics:
+        song_number += 1
+        print(f"{song_number}. {song["title"]} by {song["artist"]}")
+#--------------------------------------------
     try:
         choice = int(input("Please select one of the following songs (number): ")) - 1
-    
-        # def remove_punctuation(choice ,list_dict_title_artist_lyrics)
-        lyrics = re.sub("[\n\r]"," ",list_dict_title_artist_lyrics[choice]["lyrics"].lower())
-        lyrics = re.sub(" +"," ",lyrics)
-        lyrics_word_list = re.sub(r"[!?.,'()]","",lyrics).split(" ")
 
-        # def get_unique_sequence(lyrics_word_list)
-        unique_sequence = []
-        all_length = []
-       
-        for word in lyrics_word_list:
-            if word in unique_sequence: 
-                word_index = unique_sequence.index(word) + 1
-                all_length.append(len(unique_sequence))
-                unique_sequence = unique_sequence[word_index:]
-                unique_sequence.append(word)
-            else:
-                unique_sequence.append(word)
-        
-        # def get_max_length(all_length)
-        max_length = 0
+        if choice in range(len(list_dict_title_artist_lyrics) + 1):
+            lyrics_word_list = hf.remove_punctuation(choice ,list_dict_title_artist_lyrics)
 
-        for length in all_length:
-            if max_length < length:
-                max_length = length
+            all_lengths = hf.get_all_lenghts(lyrics_word_list)
 
-        # return max_length
+            max_length = hf.find_max_length(all_lengths)
+            song_title = list_dict_title_artist_lyrics[choice]["title"]
 
-        song_title = list_dict_title_artist_lyrics[choice]["title"]
-
-        print(f"The length of the longest unique sequence in {song_title} is {max_length}")
-    except (IndexError , ValueError):
+            print(f"The length of the longest unique sequence in {song_title} is {max_length}")
+        else:
+            print("Song Not Found")    
+    except ValueError:
         print("Error")
+
 
 # task 8
 
 def forecast_upcoming_concerts():
-    get_artists_name_id()
+    hf.get_artists_info()
 
-    with open("dataset/concerts/concerts.csv","r",encoding = "utf-8") as f: # def read_csv
-        list_dict_concert_info = csv.DictReader(f)
-        for dict in list_dict_concert_info:   
-    
-     # def get_artists_ctcode_date()
-            dict_artists_ctcode_date = {}
-            day = f"{int(dict["day"]):02d}"
-            month = f"{int(dict["month"]):02d}"
-            year = dict["year"]
-
-
-            if dict["artist"] not in dict_artists_ctcode_date.keys():
-                date = f"{year}-{month}-{day}"
-                dict_artists_ctcode_date[dict["artist"]] = [(dict["city_code"],date)]
-            else:
-                date = date = f"{year}-{month}-{day}"
-                dict_artists_ctcode_date[dict["artist"]].append((dict["city_code"],date))
-        # return dict_artists_ctcode_date
+    concerts_file_path = "dataset/concerts/concerts.csv"
+    concerts_info = hf.read_csv(concerts_file_path)
+    artists_ctcode_date = hf.get_artists_ctcode_date(concerts_info)
 
     print("Upcoming artists:")
-
-    for key in dict_artists_ctcode_date.keys():
+    for key in artists_ctcode_date.keys():
         print(f"- {key}")
 
-    try:
-        user_choice = input("Please input the name of one of the following artists: ").lower()
-        chosen_art = ""
-        
-        for key,value in artists_low_idnamegenre.items(): # def find_artist(user_choise, artists_low_idnamegenre)
-            if key == user_choice.lower():
-                chosen_art = value[1]
-            elif user_choice.lower() not in artists_low_idnamegenre.keys():
-                print("Artist Not Found")
-                return
+    user_choice = input("Please input the name of one of the following artists: ").lower()
+    
+    artist_found = hf.find_artist(user_choice)
 
-        with open("dataset/weather/weather.csv","r",encoding = "utf-8") as f: # def read_csv
-            list_dict_weather_info = csv.DictReader(f)
-            for dict in list_dict_weather_info:
+    if artist_found:
 
-            # def get_weather_info()
-           
-                weather_concerts = []
+        chosen_art = artists_low_idnamegenre[user_choice]["name"]
+        weather_file_path = "dataset/weather/weather.csv"
 
-            for city_code, date in dict_artists_ctcode_date[chosen_art]:
-                if city_code == dict["city_code"] and date == dict["date"]:
-                    weather_concerts.append(dict)
+        weather_info = hf.read_csv(weather_file_path)
+        concerts_weather = hf.get_concerts_weather(weather_info, artists_ctcode_date)
 
-        list_city_dates = []
+        dates = hf.get_date_suffix(concerts_weather)
+        weather_recom = hf.get_recommendations(concerts_weather)
 
-          # def get_date_suffix(weather_concerts,list_city_dates)
-        for concert in weather_concerts:  
-            date_str = concert["date"]  # e.g. '2025-09-25'
-            
-            year = int(date_str[:4])    
-            month = int(date_str[5:7])     
-            day = int(date_str[-2:])         
-            if 11 <= day <= 13:
-                suffix = "th"
-            else:
-                suffix = {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
-            
-            month_name = months[int(month) - 1]
-            
-            list_city_dates.append((concert["city"],f"{month_name} {day}{suffix} {year}"))
+        print_recom(weather_recom, concerts_weather, dates)
 
-        # def get_recommendations
-        weather_recom = []
-
-        for concert in weather_concerts:
-            recommend = ""
-            if int(concert["temperature_min"]) > 10 and float(concert["precipitation"]) < 2.3:
-                recommend += "Perfect weather!"
-
-            if int(concert["temperature_min"]) <= 10:
-                recommend += "Wear warm clothes. "
-
-            if float(concert["precipitation"]) >= 2.3:
-                if int(concert["wind_speed"]) < 15:
-                    recommend += "Bring an umbrella."
-                else:
-                    recommend += "Bring a rain jacket."
-           
-            weather_recom.append(recommend)
                 
-        # def print_recom
+        def print_recom(weather_recom, concerts_weather, dates):
 
-        if len(weather_concerts) > 1:
-            print(f"Fetching weather forecast for {chosen_art} concerts...")
-            print(f"{chosen_art} has {len(weather_concerts)} upcoming concerts:")
-        else:
-            print(f"Fetching weather forecast for \"{chosen_art}\" concerts...")
-            print(f"{chosen_art} has {len(weather_concerts)} upcoming concert:")
+            if len(concerts_weather) > 1:
+                print(f"Fetching weather forecast for {chosen_art} concerts...")
+                print(f"{chosen_art} has {len(concerts_weather)} upcoming concerts:")
+            else:
+                print(f"Fetching weather forecast for \"{chosen_art}\" concerts...")
+                print(f"{chosen_art} has 1 upcoming concert:")
 
-        index = 0
-        for concert in weather_concerts:
-            date = list_city_dates[index][1]
-            recom = weather_recom[index]
-            print(f"- {concert["city"]}, {date}. {recom}")
-            index += 1
-
-    except TypeError :
-        print("TypeError")
+            index = 0
+            for concert in concerts_weather:
+                date = dates[index]
+                recom = weather_recom[index]
+                print(f"- {concert["city"]}, {date}. {recom}")
+                index += 1
+    else:
+        print("Artist Not Found")
 
 
 
